@@ -3,6 +3,8 @@ Database connection module for Supabase.
 Uses service role key for write access (pipeline).
 """
 import os
+import math
+import json
 from supabase import create_client, Client
 
 
@@ -14,20 +16,48 @@ def get_client() -> Client:
     return create_client(url, key)
 
 
+def scrub_row(row):
+    """Aggressively clean every value in a row before JSON serialization."""
+    clean = {}
+    for k, v in row.items():
+        if v is None:
+            clean[k] = None
+        elif isinstance(v, str):
+            if v.lower() in ('inf', '-inf', 'infinity', '-infinity', 'nan'):
+                clean[k] = None
+            else:
+                clean[k] = v
+        elif isinstance(v, (int, bool)):
+            clean[k] = v
+        else:
+            try:
+                fv = float(v)
+                if math.isnan(fv) or math.isinf(fv):
+                    clean[k] = None
+                else:
+                    clean[k] = v
+            except (TypeError, ValueError, OverflowError):
+                clean[k] = v
+    return clean
+
+
 def upsert_screener_results(client: Client, results: list[dict], run_date: str):
     """Upsert screener results for a given run date."""
+    clean_batch = []
     for row in results:
         row["run_date"] = run_date
+        clean_batch.append(scrub_row(row))
     client.table("screener_results").upsert(
-        results, on_conflict="run_date,ticker"
+        clean_batch, on_conflict="run_date,ticker"
     ).execute()
 
 
 def upsert_macro_indicators(client: Client, data: dict, run_date: str):
     """Upsert macro indicators for a given run date."""
     data["run_date"] = run_date
+    clean = scrub_row(data)
     client.table("macro_indicators").upsert(
-        data, on_conflict="run_date"
+        clean, on_conflict="run_date"
     ).execute()
 
 
