@@ -1,6 +1,6 @@
 """
 Database connection module for Supabase.
-Uses service role key for write access (pipeline).
+Bulletproof JSON sanitization - no inf/NaN can reach the wire.
 """
 import os
 import json
@@ -18,6 +18,7 @@ def get_client() -> Client:
 
 class SafeEncoder(json.JSONEncoder):
     """JSON encoder that converts inf, -inf, NaN, and numpy types to None."""
+
     def default(self, obj):
         try:
             val = float(obj)
@@ -36,15 +37,24 @@ class SafeEncoder(json.JSONEncoder):
             return {k: self._sanitize(v) for k, v in obj.items()}
         elif isinstance(obj, list):
             return [self._sanitize(v) for v in obj]
+        elif obj is None:
+            return None
+        elif isinstance(obj, bool):
+            return obj
         elif isinstance(obj, float):
             if math.isnan(obj) or math.isinf(obj):
                 return None
+            return obj
+        elif isinstance(obj, int):
+            return obj
+        elif isinstance(obj, str):
             return obj
         else:
             try:
                 val = float(obj)
                 if math.isnan(val) or math.isinf(val):
                     return None
+                return val
             except (TypeError, ValueError, OverflowError):
                 pass
             return obj
@@ -75,7 +85,6 @@ def upsert_macro_indicators(client: Client, data: dict, run_date: str):
 
 
 def log_run_start(client: Client, run_type: str) -> int:
-    """Log the start of a pipeline run. Returns the run ID."""
     result = client.table("run_log").insert({
         "run_type": run_type,
         "status": "running"
@@ -86,7 +95,6 @@ def log_run_start(client: Client, run_type: str) -> int:
 def log_run_end(client: Client, run_id: int, status: str,
                 tickers_processed: int = 0, tickers_failed: int = 0,
                 error_message: str = None):
-    """Log the end of a pipeline run."""
     update = {
         "finished_at": "now()",
         "status": status,

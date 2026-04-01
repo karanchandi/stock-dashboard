@@ -1,8 +1,9 @@
 """
-Global Ticker Universe Builder v3
+Global Ticker Universe Builder v4
 Subsectors: Oil & Gas, Uranium & Nuclear, Precious Metals,
             Industrial & Battery Metals, Agriculture & Potash,
-            Water & Water Rights, REIT
+            Water & Water Rights, Defense & Aerospace,
+            US Manufacturing, REIT
 """
 
 # =====================================================================
@@ -18,19 +19,8 @@ US_ENERGY = [
 ]
 
 US_URANIUM_NUCLEAR = [
-    "LEU",    # Centrus Energy - uranium enrichment
-    "CCJ",    # Cameco (US listing)
-    "UEC",    # Uranium Energy Corp
-    "UUUU",   # Energy Fuels
-    "DNN",    # Denison Mines (US listing)
-    "NXE",    # NexGen Energy (US listing)
-    "OKLO",   # Oklo - advanced nuclear
-    "SMR",    # NuScale Power - small modular reactors
-    "VST",    # Vistra (nuclear fleet operator)
-    "CEG",    # Constellation Energy (largest US nuclear fleet)
-    "TLN",    # Talen Energy (nuclear)
-    "BWXT",   # BWX Technologies - nuclear components
-    "GEV",    # GE Vernova - nuclear turbines/services
+    "LEU", "CCJ", "UEC", "UUUU", "DNN", "NXE", "OKLO", "SMR",
+    "VST", "CEG", "TLN", "BWXT", "GEV",
 ]
 
 US_PRECIOUS_METALS = [
@@ -44,43 +34,95 @@ US_INDUSTRIAL_BATTERY_METALS = [
 ]
 
 US_AGRICULTURE = [
-    # Diversified ag & grain
     "ADM", "BG", "CTVA", "DE", "AGCO", "ANDE", "INGR", "DAR",
     "CALM", "VITL", "LMNR", "ALCO", "AVD", "SMG",
-    # Potash & fertilizer (primary focus)
-    "NTR",    # Nutrien - world's largest potash producer
-    "MOS",    # Mosaic - potash & phosphate
-    "CF",     # CF Industries - nitrogen fertilizer
-    "FMC",    # FMC Corp - crop chemicals
-    "IPI",    # Intrepid Potash - only US pure-play potash producer
-    "ICL",    # ICL Group - potash, phosphate (Israel, US-listed)
-    "RKDA",   # Arcadia Biosciences - crop traits
-    "AMAM",   # Amergent Hospitality (formerly K+S AG exposure via ADR)
+    "NTR", "MOS", "CF", "FMC", "IPI", "ICL", "RKDA",
 ]
 
 US_WATER = [
-    # Water utilities
-    "AWK",    # American Water Works - largest US water utility
-    "WTRG",   # Essential Utilities - water & wastewater
-    "CWT",    # California Water Service - drought-exposed regions
-    "AWR",    # American States Water - water utility + military contracts
-    "HTO",    # H2O America (fka SJW Group) - Silicon Valley water
-    "MSEX",   # Middlesex Water - NJ/DE water utility
-    "YORW",   # York Water - oldest US water utility (est. 1816)
-    "ARTNA",  # Artesian Resources - DE/MD/PA water
-    "SBS",    # Sabesp - Brazilian water utility (US ADR)
-    # Water technology & infrastructure
-    "XYL",    # Xylem - water tech, pumps, treatment
-    "BMI",    # Badger Meter - smart water metering
-    "WMS",    # Advanced Drainage Systems - stormwater mgmt
-    "MWA",    # Mueller Water Products - water infrastructure
-    "FERG",   # Ferguson - plumbing/water distribution
-    "ECL",    # Ecolab - water treatment chemicals
-    "A",      # Agilent Technologies - water quality testing
-    "WDDD",   # Consolidated Water - Caribbean/US desalination
-    "PNR",    # Pentair - water treatment & filtration
-    # Water rights / land with water
-    "PICO",   # PICO Holdings - water rights in Nevada/Arizona
+    "AWK", "WTRG", "CWT", "AWR", "HTO", "MSEX", "YORW", "ARTNA", "SBS",
+    "XYL", "BMI", "WMS", "MWA", "FERG", "ECL", "A", "PNR",
+]
+
+US_DEFENSE = [
+    # Prime contractors
+    "LMT",    # Lockheed Martin
+    "RTX",    # RTX (Raytheon)
+    "NOC",    # Northrop Grumman
+    "GD",     # General Dynamics
+    "BA",     # Boeing
+    "LHX",    # L3Harris Technologies
+    "HII",    # Huntington Ingalls
+    "TDG",    # TransDigm Group
+    "HWM",    # Howmet Aerospace
+    "TXT",    # Textron
+    "LDOS",   # Leidos
+    "SAIC",   # Science Applications International
+    "BAH",    # Booz Allen Hamilton
+    "MRCY",   # Mercury Systems
+    "KTOS",   # Kratos Defense & Security
+    "AVAV",   # AeroVironment - drones
+    "RKLB",   # Rocket Lab - space launch
+    "PL",     # Planet Labs - satellite imagery
+    "IRDM",   # Iridium Communications - satellite
+    "PLTR",   # Palantir - defense AI/analytics
+    "AXON",   # Axon Enterprise - law enforcement tech
+    # Cybersecurity
+    "CRWD",   # CrowdStrike
+    "PANW",   # Palo Alto Networks
+    "FTNT",   # Fortinet
+    "ZS",     # Zscaler
+    "S",      # SentinelOne
+    "NET",    # Cloudflare
+    "CYBR",   # CyberArk
+    "MNDT",   # Mandiant (if still listed)
+    "TENB",   # Tenable
+    "RPD",    # Rapid7
+]
+
+US_MANUFACTURING = [
+    # Industrial / heavy machinery
+    "CAT",    # Caterpillar
+    "EMR",    # Emerson Electric
+    "ROK",    # Rockwell Automation
+    "ETN",    # Eaton Corporation
+    "PH",     # Parker Hannifin
+    "DOV",    # Dover Corporation
+    "ITW",    # Illinois Tool Works
+    "GE",     # GE Aerospace
+    "HON",    # Honeywell
+    "MMM",    # 3M
+    "SWK",    # Stanley Black & Decker
+    "IR",     # Ingersoll Rand
+    "AME",    # AMETEK
+    "GNRC",   # Generac Holdings
+    "CMI",    # Cummins
+    "OSK",    # Oshkosh Corporation
+    "TTC",    # Toro Company
+    # Semiconductors / chips (US manufacturers)
+    "INTC",   # Intel
+    "TXN",    # Texas Instruments
+    "MU",     # Micron Technology
+    "MCHP",   # Microchip Technology
+    "ON",     # ON Semiconductor
+    "ADI",    # Analog Devices
+    "NXPI",   # NXP Semiconductors
+    "SWKS",   # Skyworks Solutions
+    "QRVO",   # Qorvo
+    "GFS",    # GlobalFoundries
+    "WOLF",   # Wolfspeed - SiC chips
+    "LSCC",   # Lattice Semiconductor
+    # Consumer goods manufacturers
+    "PG",     # Procter & Gamble
+    "CL",     # Colgate-Palmolive
+    "KMB",    # Kimberly-Clark
+    "CHD",    # Church & Dwight
+    "CLX",    # Clorox
+    "HELE",   # Helen of Troy
+    "SPB",    # Spectrum Brands
+    "ENR",    # Energizer Holdings
+    "WHR",    # Whirlpool
+    "LEG",    # Leggett & Platt
 ]
 
 US_REITS = [
@@ -118,9 +160,11 @@ CA_INDUSTRIAL_BATTERY_METALS = [
     "LAC.TO", "SLI.V", "CNC.V",
 ]
 
-CA_AGRICULTURE = [
-    "NTR.TO",   # Nutrien - HQ'd in Saskatoon, world's largest potash
-    "POT.TO",   # (legacy ticker, may not resolve - Nutrien absorbed it)
+CA_AGRICULTURE = ["NTR.TO"]
+
+CA_DEFENSE = [
+    "CAE.TO",   # CAE Inc - flight simulation/training
+    "MDA.TO",   # MDA Space - satellite systems
 ]
 
 CA_REITS = [
@@ -140,19 +184,14 @@ AU_URANIUM_NUCLEAR = [
     "ERA.AX", "AGE.AX", "PEN.AX",
 ]
 
-AU_PRECIOUS_METALS = [
-    "NST.AX", "EVN.AX", "SBM.AX", "RRL.AX", "CMM.AX",
-]
+AU_PRECIOUS_METALS = ["NST.AX", "EVN.AX", "SBM.AX", "RRL.AX", "CMM.AX"]
 
 AU_INDUSTRIAL_BATTERY_METALS = [
     "BHP.AX", "RIO.AX", "FMG.AX", "S32.AX", "SFR.AX", "29M.AX",
     "MIN.AX", "PLS.AX", "LTR.AX", "IGO.AX", "LYC.AX", "ILU.AX", "SYR.AX",
 ]
 
-AU_AGRICULTURE = [
-    "GNC.AX", "ELD.AX", "NUF.AX", "AAC.AX",
-    "IPL.AX",   # Incitec Pivot - fertilizer & explosives
-]
+AU_AGRICULTURE = ["GNC.AX", "ELD.AX", "NUF.AX", "AAC.AX"]
 
 AU_REITS = [
     "GMG.AX", "SCG.AX", "GPT.AX", "MGR.AX", "SGP.AX", "DXS.AX",
@@ -164,8 +203,7 @@ AU_REITS = [
 # =====================================================================
 
 ZA_PRECIOUS_METALS = [
-    "ANG.JO", "GFI.JO", "HAR.JO", "DRD.JO", "PAN.JO",
-    "IMP.JO", "SSW.JO",
+    "ANG.JO", "GFI.JO", "HAR.JO", "DRD.JO", "PAN.JO", "IMP.JO", "SSW.JO",
 ]
 
 ZA_INDUSTRIAL_BATTERY_METALS = ["KIO.JO", "SOL.JO", "EXX.JO"]
@@ -176,54 +214,40 @@ ZA_ENERGY = ["TGA.JO"]
 # =====================================================================
 
 UK_ENERGY = ["SHEL.L", "BP.L", "CNE.L", "TLW.L", "HBR.L", "ENQ.L", "HTG.L"]
-
 UK_PRECIOUS_METALS = ["FRES.L", "HOC.L"]
+UK_INDUSTRIAL_BATTERY_METALS = ["RIO.L", "GLEN.L", "AAL.L", "ANTO.L", "BHP.L", "HMSO.L"]
 
-UK_INDUSTRIAL_BATTERY_METALS = [
-    "RIO.L", "GLEN.L", "AAL.L", "ANTO.L", "BHP.L", "HMSO.L",
+UK_DEFENSE = [
+    "BA.L",     # BAE Systems
+    "RR.L",     # Rolls-Royce
+    "MGGT.L",   # Meggitt (if still listed)
+    "QQ.L",     # QinetiQ
 ]
 
-UK_WATER = [
-    "SVT.L",    # Severn Trent - major UK water utility
-    "UU.L",     # United Utilities - NW England water
-    "PNNL.L",   # Pennon Group - SW England water
-]
-
+UK_WATER = ["SVT.L", "UU.L", "PNNL.L"]
 UK_REITS = ["LAND.L", "BLND.L", "SGRO.L", "UTG.L", "BBOX.L", "SUPR.L"]
 
 # =====================================================================
 # INTERNATIONAL - OTHER
 # =====================================================================
 
-# Israel - potash
-IL_AGRICULTURE = [
-    "ICL",      # ICL Group - potash/phosphate (also in US list, deduped)
-]
-
-# Germany - potash
-DE_AGRICULTURE = [
-    "SDF.DE",   # K+S AG - major European potash producer
-]
-
-# Hong Kong
+DE_AGRICULTURE = ["SDF.DE"]
 HK_ENERGY = ["0883.HK", "2688.HK", "0857.HK", "0386.HK"]
 HK_INDUSTRIAL_METALS = ["1088.HK", "3993.HK", "1171.HK", "2600.HK"]
 HK_OTHER = ["0267.HK", "1208.HK"]
+FR_WATER = ["VEOEY"]
+BR_AGRICULTURE = ["VALE"]
 
-# France - water
-FR_WATER = [
-    "VEOEY",    # Veolia - world's largest water company (US ADR)
+EU_DEFENSE = [
+    "AIR.PA",   # Airbus
+    "RHM.DE",   # Rheinmetall
+    "HO.PA",    # Thales
+    "SAB.MC",   # SAAB (if on Madrid, else SAB-B.ST)
 ]
 
-# Singapore REITs
 SG_REITS = [
     "A17U.SI", "N2IU.SI", "ME8U.SI", "C38U.SI", "BUOU.SI",
     "J69U.SI", "M44U.SI", "H78.SI",
-]
-
-# Brazil - potash
-BR_AGRICULTURE = [
-    "VALE",     # Vale - exploring potash in Brazil
 ]
 
 
@@ -240,6 +264,8 @@ def build_universe():
     add(US_INDUSTRIAL_BATTERY_METALS, "Materials", "Industrial & Battery Metals", "US")
     add(US_AGRICULTURE, "Materials", "Agriculture & Potash", "US")
     add(US_WATER, "Utilities", "Water & Water Rights", "US")
+    add(US_DEFENSE, "Industrials", "Defense & Aerospace", "US")
+    add(US_MANUFACTURING, "Industrials", "US Manufacturing", "US")
     add(US_REITS, "Real Estate", "REIT", "US")
 
     # Canada
@@ -248,6 +274,7 @@ def build_universe():
     add(CA_PRECIOUS_METALS, "Materials", "Precious Metals", "TSX")
     add(CA_INDUSTRIAL_BATTERY_METALS, "Materials", "Industrial & Battery Metals", "TSX")
     add(CA_AGRICULTURE, "Materials", "Agriculture & Potash", "TSX")
+    add(CA_DEFENSE, "Industrials", "Defense & Aerospace", "TSX")
     add(CA_REITS, "Real Estate", "REIT", "TSX")
 
     # Australia
@@ -267,24 +294,20 @@ def build_universe():
     add(UK_ENERGY, "Energy", "Oil & Gas", "LSE")
     add(UK_PRECIOUS_METALS, "Materials", "Precious Metals", "LSE")
     add(UK_INDUSTRIAL_BATTERY_METALS, "Materials", "Industrial & Battery Metals", "LSE")
+    add(UK_DEFENSE, "Industrials", "Defense & Aerospace", "LSE")
     add(UK_WATER, "Utilities", "Water & Water Rights", "LSE")
     add(UK_REITS, "Real Estate", "REIT", "LSE")
 
-    # Germany
+    # Europe
+    add(EU_DEFENSE, "Industrials", "Defense & Aerospace", "EU")
     add(DE_AGRICULTURE, "Materials", "Agriculture & Potash", "XETRA")
 
-    # France
+    # Other
     add(FR_WATER, "Utilities", "Water & Water Rights", "US")
-
-    # Brazil
     add(BR_AGRICULTURE, "Materials", "Agriculture & Potash", "US")
-
-    # Hong Kong
     add(HK_ENERGY, "Energy", "Oil & Gas", "HKEX")
     add(HK_INDUSTRIAL_METALS, "Materials", "Industrial & Battery Metals", "HKEX")
     add(HK_OTHER, "Energy/Materials", "Mixed", "HKEX")
-
-    # Singapore
     add(SG_REITS, "Real Estate", "REIT", "SGX")
 
     seen = set()

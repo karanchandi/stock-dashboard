@@ -1,30 +1,18 @@
 """
-Main Pipeline Runner
-Orchestrates: screener (fundamentals + analyst) → EDGAR insider → macro indicators → Supabase
+Main Pipeline Runner v2
+Orchestrates: screener → EDGAR insider → macro indicators → Supabase
+All data sanitized before database writes.
 """
 import os
 import sys
 import math
+import json
 import traceback
 from datetime import date
 
-# Add pipeline dir to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from db import get_client, upsert_screener_results, upsert_macro_indicators, log_run_start, log_run_end
-
-
-def clean_value(v):
-    """Replace NaN, inf, and -inf with None for JSON serialization."""
-    try:
-        if v is None:
-            return None
-        fv = float(v)
-        if math.isnan(fv) or math.isinf(fv):
-            return None
-        return v
-    except (TypeError, ValueError, OverflowError):
-        return v
+from db import get_client, upsert_screener_results, upsert_macro_indicators, log_run_start, log_run_end, force_clean
 
 
 def run_pipeline():
@@ -44,10 +32,9 @@ def run_pipeline():
         # --- Phase 1: Screener (fundamentals + analyst in single pass) ---
         print("PHASE 1: Stock Screener (fundamentals + analyst)")
         print("-" * 50)
-        from screener import fetch_all_data, score_value, score_analyst, categorize_market_cap, safe_float
+        from screener import fetch_all_data, score_value, score_analyst, categorize_market_cap
         from ticker_universe import build_universe
         import time
-        import pandas as pd
 
         universe = build_universe()
         results = []
@@ -134,7 +121,10 @@ def run_pipeline():
                 tw = sum(weights)
                 row["combined_score"] = round(sum(p * w for p, w in zip(parts, weights)) / tw, 2)
 
-        # Clean up fields for DB (remove non-schema keys)
+        # --- Phase 3: Write to Supabase ---
+        print(f"\nPHASE 3: Writing to Supabase")
+        print("-" * 50)
+
         db_fields = {
             "ticker", "name", "exchange", "sector", "subsector", "currency",
             "price", "market_cap", "market_cap_tier",
@@ -151,17 +141,16 @@ def run_pipeline():
             "value_score", "analyst_score", "insider_score", "combined_score",
         }
 
-        # Rename 52w fields to match DB schema and clean all values
         clean_results = []
         for row in results:
-            clean = {k: clean_value(v) for k, v in row.items() if k in db_fields}
-            clean["high_52w"] = clean_value(row.get("52w_high"))
-            clean["low_52w"] = clean_value(row.get("52w_low"))
-            clean["pct_from_52w_high"] = clean_value(row.get("pct_from_52w_high"))
+            clean = {k: v for k, v in row.items() if k in db_fields}
+            clean["high_52w"] = row.get("52w_high")
+            clean["low_52w"] = row.get("52w_low")
+            clean["pct_from_52w_high"] = row.get("pct_from_52w_high")
             clean_results.append(clean)
 
-        # Write to Supabase in batches to avoid payload limits
-        print(f"\nWriting {len(clean_results)} rows to Supabase...")
+        # Write in batches — force_clean handles all sanitization
+        print(f"Writing {len(clean_results)} rows to Supabase...")
         batch_size = 50
         for i in range(0, len(clean_results), batch_size):
             batch = clean_results[i:i + batch_size]
@@ -169,14 +158,12 @@ def run_pipeline():
             print(f"  Batch {i // batch_size + 1}: wrote {len(batch)} rows")
         print("  Screener data saved.")
 
-        # --- Phase 3: Macro Indicators ---
-        print(f"\nPHASE 3: Macro Indicators")
+        # --- Phase 4: Macro Indicators ---
+        print(f"\nPHASE 4: Macro Indicators")
         print("-" * 50)
         from macro_indicators import fetch_macro_data
 
         macro = fetch_macro_data()
-        # Clean all values
-        macro = {k: clean_value(v) for k, v in macro.items()}
         upsert_macro_indicators(client, macro, run_date)
         print("  Macro data saved.")
 
