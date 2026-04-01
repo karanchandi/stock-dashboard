@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import PriceChart from './PriceChart';
 
 interface StockDetailProps {
   ticker: string;
@@ -159,21 +160,10 @@ export default function StockDetail({ ticker, onBack, onAddToWatchlist }: StockD
         </Card>
       </div>
 
-      {/* Historical score trends */}
-      {history.length > 1 && (
-        <div className="rounded-lg p-4" style={{ background: 'var(--bg-primary)', border: '0.5px solid var(--border)' }}>
-          <div className="text-xs mb-3" style={{ color: 'var(--text-secondary)' }}>Price history</div>
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={history}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis dataKey="run_date" tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} />
-              <YAxis domain={['auto', 'auto']} tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} tickFormatter={(v: any) => `$${Number(v).toFixed(0)}`} />
-              <Tooltip contentStyle={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
-              <Line type="monotone" dataKey="price" stroke="#378ADD" strokeWidth={2} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      )}
+      {/* Interactive price chart */}
+      <div className="rounded-lg p-4" style={{ background: 'var(--bg-primary)', border: '0.5px solid var(--border)' }}>
+        <PriceChart ticker={s.ticker} compact={false} />
+      </div>
 
       {/* Valuation metrics */}
       <div>

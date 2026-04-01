@@ -138,7 +138,7 @@ export default function Home() {
         ) : activeTab === 'macro' ? (
           <MacroDashboard data={macro} />
         ) : activeTab === 'screener' ? (
-          <StockScreener stocks={stocks} onSelectTicker={handleSelectTicker} />
+          <StockScreener stocks={stocks} onSelectTicker={handleSelectTicker} onAddToWatchlist={handleAddToWatchlist} />
         ) : (
           <Watchlist onSelectTicker={handleSelectTicker} latestPrices={latestPrices} />
         )}

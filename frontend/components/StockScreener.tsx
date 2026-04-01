@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import StockRowDropdown from './StockRowDropdown';
 
 interface Stock {
   ticker: string;
@@ -28,9 +29,7 @@ type SortKey = keyof Stock;
 
 function Signal({ color }: { color: 'green' | 'yellow' | 'red' | 'gray' }) {
   const colors = { green: '#1D9E75', yellow: '#EF9F27', red: '#E24B4A', gray: '#9ca3af' };
-  return (
-    <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: colors[color], marginRight: 4 }} />
-  );
+  return <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: colors[color], marginRight: 4 }} />;
 }
 
 function scoreColor(score: number | null): 'green' | 'yellow' | 'red' | 'gray' {
@@ -61,11 +60,18 @@ function formatDollar(v: number | null): string {
   return `$${v.toFixed(0)}`;
 }
 
-export default function StockScreener({ stocks, onSelectTicker }: { stocks: Stock[]; onSelectTicker?: (ticker: string) => void }) {
+interface ScreenerProps {
+  stocks: Stock[];
+  onSelectTicker?: (ticker: string) => void;
+  onAddToWatchlist?: (ticker: string) => void;
+}
+
+export default function StockScreener({ stocks, onSelectTicker, onAddToWatchlist }: ScreenerProps) {
   const [sortKey, setSortKey] = useState<SortKey>('combined_score');
   const [sortAsc, setSortAsc] = useState(false);
   const [filterSubsector, setFilterSubsector] = useState<string>('All');
   const [searchTerm, setSearchTerm] = useState('');
+  const [expandedTicker, setExpandedTicker] = useState<string | null>(null);
 
   const subsectors = useMemo(() => {
     const subs = [...new Set(stocks.map((s) => s.subsector).filter(Boolean))].sort();
@@ -100,6 +106,10 @@ export default function StockScreener({ stocks, onSelectTicker }: { stocks: Stoc
       setSortKey(key);
       setSortAsc(false);
     }
+  }
+
+  function handleTickerClick(ticker: string) {
+    setExpandedTicker(expandedTicker === ticker ? null : ticker);
   }
 
   const SortHeader = ({ label, field }: { label: string; field: SortKey }) => (
@@ -186,42 +196,57 @@ export default function StockScreener({ stocks, onSelectTicker }: { stocks: Stoc
             </thead>
             <tbody>
               {filtered.map((s, i) => (
-                <tr
-                  key={s.ticker + i}
-                  className="hover:opacity-80 transition-opacity"
-                  style={{ borderBottom: '0.5px solid var(--border)' }}
-                >
-                  <td className="px-2 py-2 font-semibold">
-                    <button onClick={() => onSelectTicker?.(s.ticker)} className="hover:underline" style={{ color: '#378ADD', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 'inherit' }}>{s.ticker}</button>
-                  </td>
-                  <td className="px-2 py-2 max-w-[160px] truncate" style={{ color: 'var(--text-secondary)' }}>{s.name}</td>
-                  <td className="px-2 py-2" style={{ color: 'var(--text-secondary)' }}>{s.subsector}</td>
-                  <td className="px-2 py-2 font-medium">${formatNum(s.price)}</td>
-                  <td className="px-2 py-2" style={{ color: 'var(--text-secondary)' }}>{formatMarketCap(s.market_cap)}</td>
-                  <td className="px-2 py-2 font-semibold">
-                    <Signal color={scoreColor(s.combined_score)} />
-                    {formatNum(s.combined_score, 1)}
-                  </td>
-                  <td className="px-2 py-2">{formatNum(s.value_score, 1)}</td>
-                  <td className="px-2 py-2">{formatNum(s.analyst_score, 1)}</td>
-                  <td className="px-2 py-2">{formatNum(s.insider_score, 1)}</td>
-                  <td className="px-2 py-2">{formatNum(s.pe_ratio, 1)}</td>
-                  <td className="px-2 py-2">{formatNum(s.pb_ratio, 2)}</td>
-                  <td className="px-2 py-2">{s.dividend_yield_pct ? `${formatNum(s.dividend_yield_pct, 1)}%` : '-'}</td>
-                  <td className="px-2 py-2" style={{ color: s.upside_pct > 0 ? '#1D9E75' : s.upside_pct < 0 ? '#E24B4A' : 'var(--text-secondary)' }}>
-                    {s.upside_pct ? `${s.upside_pct > 0 ? '+' : ''}${formatNum(s.upside_pct, 1)}%` : '-'}
-                  </td>
-                  <td className="px-2 py-2 capitalize" style={{ color: 'var(--text-secondary)' }}>{s.analyst_consensus || '-'}</td>
-                  <td className="px-2 py-2" style={{ color: s.buy_count > 0 ? '#1D9E75' : 'var(--text-secondary)' }}>
-                    {s.buy_count ?? '-'}
-                  </td>
-                  <td className="px-2 py-2" style={{ color: s.sell_count > 0 ? '#E24B4A' : 'var(--text-secondary)' }}>
-                    {s.sell_count ?? '-'}
-                  </td>
-                  <td className="px-2 py-2" style={{ color: (s.insider_net_value ?? 0) > 0 ? '#1D9E75' : (s.insider_net_value ?? 0) < 0 ? '#E24B4A' : 'var(--text-secondary)' }}>
-                    {s.insider_net_value != null ? formatDollar(s.insider_net_value) : '-'}
-                  </td>
-                </tr>
+                <>
+                  <tr
+                    key={s.ticker + i}
+                    className="hover:opacity-80 transition-opacity cursor-pointer"
+                    style={{
+                      borderBottom: expandedTicker === s.ticker ? 'none' : '0.5px solid var(--border)',
+                      background: expandedTicker === s.ticker ? 'var(--bg-secondary)' : 'transparent',
+                    }}
+                    onClick={() => handleTickerClick(s.ticker)}
+                  >
+                    <td className="px-2 py-2 font-semibold" style={{ color: '#378ADD' }}>{s.ticker}</td>
+                    <td className="px-2 py-2 max-w-[160px] truncate" style={{ color: 'var(--text-secondary)' }}>{s.name}</td>
+                    <td className="px-2 py-2" style={{ color: 'var(--text-secondary)' }}>{s.subsector}</td>
+                    <td className="px-2 py-2 font-medium">${formatNum(s.price)}</td>
+                    <td className="px-2 py-2" style={{ color: 'var(--text-secondary)' }}>{formatMarketCap(s.market_cap)}</td>
+                    <td className="px-2 py-2 font-semibold">
+                      <Signal color={scoreColor(s.combined_score)} />
+                      {formatNum(s.combined_score, 1)}
+                    </td>
+                    <td className="px-2 py-2">{formatNum(s.value_score, 1)}</td>
+                    <td className="px-2 py-2">{formatNum(s.analyst_score, 1)}</td>
+                    <td className="px-2 py-2">{formatNum(s.insider_score, 1)}</td>
+                    <td className="px-2 py-2">{formatNum(s.pe_ratio, 1)}</td>
+                    <td className="px-2 py-2">{formatNum(s.pb_ratio, 2)}</td>
+                    <td className="px-2 py-2">{s.dividend_yield_pct ? `${formatNum(s.dividend_yield_pct, 1)}%` : '-'}</td>
+                    <td className="px-2 py-2" style={{ color: s.upside_pct > 0 ? '#1D9E75' : s.upside_pct < 0 ? '#E24B4A' : 'var(--text-secondary)' }}>
+                      {s.upside_pct ? `${s.upside_pct > 0 ? '+' : ''}${formatNum(s.upside_pct, 1)}%` : '-'}
+                    </td>
+                    <td className="px-2 py-2 capitalize" style={{ color: 'var(--text-secondary)' }}>{s.analyst_consensus || '-'}</td>
+                    <td className="px-2 py-2" style={{ color: s.buy_count > 0 ? '#1D9E75' : 'var(--text-secondary)' }}>
+                      {s.buy_count ?? '-'}
+                    </td>
+                    <td className="px-2 py-2" style={{ color: s.sell_count > 0 ? '#E24B4A' : 'var(--text-secondary)' }}>
+                      {s.sell_count ?? '-'}
+                    </td>
+                    <td className="px-2 py-2" style={{ color: (s.insider_net_value ?? 0) > 0 ? '#1D9E75' : (s.insider_net_value ?? 0) < 0 ? '#E24B4A' : 'var(--text-secondary)' }}>
+                      {s.insider_net_value != null ? formatDollar(s.insider_net_value) : '-'}
+                    </td>
+                  </tr>
+                  {expandedTicker === s.ticker && (
+                    <tr key={`${s.ticker}-dropdown`}>
+                      <td colSpan={17} style={{ padding: 0, borderBottom: '0.5px solid var(--border)' }}>
+                        <StockRowDropdown
+                          stock={s}
+                          onViewFullDetails={(t) => onSelectTicker?.(t)}
+                          onAddToWatchlist={(t) => onAddToWatchlist?.(t)}
+                        />
+                      </td>
+                    </tr>
+                  )}
+                </>
               ))}
             </tbody>
           </table>
