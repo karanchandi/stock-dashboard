@@ -1,0 +1,252 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
+
+interface WatchlistItem {
+  id: number;
+  ticker: string;
+  notes: string;
+  target_buy_price: number | null;
+  target_sell_price: number | null;
+  position_status: string;
+  shares_held: number;
+  avg_cost_basis: number | null;
+  added_at: string;
+}
+
+interface WatchlistProps {
+  onSelectTicker: (ticker: string) => void;
+  latestPrices: Record<string, number>;
+}
+
+function fmt(v: any, decimals = 2): string {
+  if (v == null) return '-';
+  return Number(v).toFixed(decimals);
+}
+
+function Signal({ color }: { color: 'green' | 'yellow' | 'red' | 'gray' }) {
+  const colors = { green: '#1D9E75', yellow: '#EF9F27', red: '#E24B4A', gray: '#9ca3af' };
+  return <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: colors[color], marginRight: 4 }} />;
+}
+
+export default function Watchlist({ onSelectTicker, latestPrices }: WatchlistProps) {
+  const [items, setItems] = useState<WatchlistItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showAdd, setShowAdd] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+
+  // Add form state
+  const [newTicker, setNewTicker] = useState('');
+  const [newNotes, setNewNotes] = useState('');
+  const [newBuyTarget, setNewBuyTarget] = useState('');
+  const [newSellTarget, setNewSellTarget] = useState('');
+  const [newStatus, setNewStatus] = useState('watching');
+  const [newShares, setNewShares] = useState('');
+  const [newCostBasis, setNewCostBasis] = useState('');
+
+  async function fetchWatchlist() {
+    setLoading(true);
+    const { data } = await supabase
+      .from('watchlist')
+      .select('*')
+      .order('added_at', { ascending: false });
+    if (data) setItems(data);
+    setLoading(false);
+  }
+
+  useEffect(() => { fetchWatchlist(); }, []);
+
+  async function addItem() {
+    if (!newTicker.trim()) return;
+    const { error } = await supabase.from('watchlist').insert({
+      ticker: newTicker.toUpperCase().trim(),
+      notes: newNotes || null,
+      target_buy_price: newBuyTarget ? parseFloat(newBuyTarget) : null,
+      target_sell_price: newSellTarget ? parseFloat(newSellTarget) : null,
+      position_status: newStatus,
+      shares_held: newShares ? parseFloat(newShares) : 0,
+      avg_cost_basis: newCostBasis ? parseFloat(newCostBasis) : null,
+    });
+    if (!error) {
+      setNewTicker(''); setNewNotes(''); setNewBuyTarget(''); setNewSellTarget('');
+      setNewStatus('watching'); setNewShares(''); setNewCostBasis('');
+      setShowAdd(false);
+      fetchWatchlist();
+    }
+  }
+
+  async function removeItem(id: number) {
+    await supabase.from('watchlist').delete().eq('id', id);
+    fetchWatchlist();
+  }
+
+  async function updateItem(id: number, updates: Partial<WatchlistItem>) {
+    await supabase.from('watchlist').update(updates).eq('id', id);
+    setEditingId(null);
+    fetchWatchlist();
+  }
+
+  function getPriceAlert(item: WatchlistItem): { color: 'green' | 'yellow' | 'red' | 'gray'; text: string } {
+    const price = latestPrices[item.ticker];
+    if (!price) return { color: 'gray', text: 'No price data' };
+    if (item.target_buy_price && price <= item.target_buy_price) return { color: 'green', text: `At/below buy target ($${fmt(item.target_buy_price)})` };
+    if (item.target_sell_price && price >= item.target_sell_price) return { color: 'red', text: `At/above sell target ($${fmt(item.target_sell_price)})` };
+    return { color: 'gray', text: '' };
+  }
+
+  function getPositionPnL(item: WatchlistItem): { pnl: number | null; pct: number | null } {
+    if (!item.shares_held || !item.avg_cost_basis) return { pnl: null, pct: null };
+    const price = latestPrices[item.ticker];
+    if (!price) return { pnl: null, pct: null };
+    const pnl = (price - item.avg_cost_basis) * item.shares_held;
+    const pct = ((price - item.avg_cost_basis) / item.avg_cost_basis) * 100;
+    return { pnl, pct };
+  }
+
+  const inputStyle = {
+    background: 'var(--bg-secondary)',
+    border: '0.5px solid var(--border)',
+    color: 'var(--text-primary)',
+    outline: 'none',
+    borderRadius: 6,
+    padding: '6px 10px',
+    fontSize: 13,
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{items.length} stocks tracked</span>
+        <button
+          onClick={() => setShowAdd(!showAdd)}
+          className="px-3 py-1.5 rounded-md text-sm font-medium"
+          style={{ background: 'var(--text-primary)', color: 'var(--bg-primary)' }}
+        >
+          {showAdd ? 'Cancel' : '+ Add stock'}
+        </button>
+      </div>
+
+      {/* Add form */}
+      {showAdd && (
+        <div className="rounded-lg p-4 space-y-3" style={{ background: 'var(--bg-primary)', border: '0.5px solid var(--border)' }}>
+          <div className="grid grid-cols-4 gap-3">
+            <div>
+              <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Ticker</label>
+              <input style={inputStyle} className="w-full" value={newTicker} onChange={e => setNewTicker(e.target.value)} placeholder="e.g. LEU" />
+            </div>
+            <div>
+              <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Buy target</label>
+              <input style={inputStyle} className="w-full" type="number" value={newBuyTarget} onChange={e => setNewBuyTarget(e.target.value)} placeholder="$" />
+            </div>
+            <div>
+              <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Sell target</label>
+              <input style={inputStyle} className="w-full" type="number" value={newSellTarget} onChange={e => setNewSellTarget(e.target.value)} placeholder="$" />
+            </div>
+            <div>
+              <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Status</label>
+              <select style={inputStyle} className="w-full" value={newStatus} onChange={e => setNewStatus(e.target.value)}>
+                <option value="watching">Watching</option>
+                <option value="holding">Holding</option>
+                <option value="sold">Sold</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-4 gap-3">
+            <div>
+              <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Shares held</label>
+              <input style={inputStyle} className="w-full" type="number" value={newShares} onChange={e => setNewShares(e.target.value)} placeholder="0" />
+            </div>
+            <div>
+              <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Avg cost basis</label>
+              <input style={inputStyle} className="w-full" type="number" value={newCostBasis} onChange={e => setNewCostBasis(e.target.value)} placeholder="$" />
+            </div>
+            <div className="col-span-2">
+              <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Notes</label>
+              <input style={inputStyle} className="w-full" value={newNotes} onChange={e => setNewNotes(e.target.value)} placeholder="Why you're watching this..." />
+            </div>
+          </div>
+          <button
+            onClick={addItem}
+            className="px-4 py-1.5 rounded-md text-sm font-medium"
+            style={{ background: 'var(--text-primary)', color: 'var(--bg-primary)' }}
+          >
+            Add to watchlist
+          </button>
+        </div>
+      )}
+
+      {/* Watchlist items */}
+      {loading ? (
+        <div className="text-center py-10 text-sm" style={{ color: 'var(--text-secondary)' }}>Loading watchlist...</div>
+      ) : items.length === 0 ? (
+        <div className="text-center py-10 text-sm" style={{ color: 'var(--text-secondary)' }}>
+          No stocks in your watchlist yet. Click "+ Add stock" to start tracking.
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {items.map(item => {
+            const price = latestPrices[item.ticker];
+            const alert = getPriceAlert(item);
+            const { pnl, pct } = getPositionPnL(item);
+            const statusColors: Record<string, string> = { watching: '#EF9F27', holding: '#1D9E75', sold: '#9ca3af' };
+
+            return (
+              <div
+                key={item.id}
+                className="rounded-lg p-4"
+                style={{ background: 'var(--bg-primary)', border: '0.5px solid var(--border)' }}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => onSelectTicker(item.ticker)} className="text-sm font-semibold hover:underline" style={{ color: '#378ADD' }}>
+                      {item.ticker}
+                    </button>
+                    <span
+                      className="text-xs px-2 py-0.5 rounded-md font-medium capitalize"
+                      style={{ background: `${statusColors[item.position_status]}20`, color: statusColors[item.position_status] }}
+                    >
+                      {item.position_status}
+                    </span>
+                    {alert.text && (
+                      <span className="text-xs"><Signal color={alert.color} />{alert.text}</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-4">
+                    {price && <span className="text-sm font-semibold">${fmt(price)}</span>}
+                    {pnl != null && (
+                      <span className="text-xs font-medium" style={{ color: pnl >= 0 ? '#1D9E75' : '#E24B4A' }}>
+                        {pnl >= 0 ? '+' : ''}{fmtDollarCompact(pnl)} ({pct! >= 0 ? '+' : ''}{pct!.toFixed(1)}%)
+                      </span>
+                    )}
+                    <button
+                      onClick={() => removeItem(item.id)}
+                      className="text-xs px-2 py-1 rounded"
+                      style={{ color: '#E24B4A', background: '#FCEBEB' }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+                {/* Details row */}
+                <div className="flex items-center gap-6 mt-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                  {item.target_buy_price && <span>Buy target: ${fmt(item.target_buy_price)}</span>}
+                  {item.target_sell_price && <span>Sell target: ${fmt(item.target_sell_price)}</span>}
+                  {item.shares_held > 0 && <span>{item.shares_held} shares @ ${fmt(item.avg_cost_basis)}</span>}
+                  {item.notes && <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>{item.notes}</span>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function fmtDollarCompact(v: number): string {
+  if (Math.abs(v) >= 1e6) return `$${(v / 1e6).toFixed(1)}M`;
+  if (Math.abs(v) >= 1e3) return `$${(v / 1e3).toFixed(1)}K`;
+  return `$${v.toFixed(0)}`;
+}

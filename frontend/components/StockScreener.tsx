@@ -61,7 +61,7 @@ function formatDollar(v: number | null): string {
   return `$${v.toFixed(0)}`;
 }
 
-export default function StockScreener({ stocks }: { stocks: Stock[] }) {
+export default function StockScreener({ stocks, onSelectTicker }: { stocks: Stock[]; onSelectTicker?: (ticker: string) => void }) {
   const [sortKey, setSortKey] = useState<SortKey>('combined_score');
   const [sortAsc, setSortAsc] = useState(false);
   const [filterSubsector, setFilterSubsector] = useState<string>('All');
@@ -191,7 +191,9 @@ export default function StockScreener({ stocks }: { stocks: Stock[] }) {
                   className="hover:opacity-80 transition-opacity"
                   style={{ borderBottom: '0.5px solid var(--border)' }}
                 >
-                  <td className="px-2 py-2 font-semibold" style={{ color: 'var(--text-primary)' }}>{s.ticker}</td>
+                  <td className="px-2 py-2 font-semibold">
+                    <button onClick={() => onSelectTicker?.(s.ticker)} className="hover:underline" style={{ color: '#378ADD', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 'inherit' }}>{s.ticker}</button>
+                  </td>
                   <td className="px-2 py-2 max-w-[160px] truncate" style={{ color: 'var(--text-secondary)' }}>{s.name}</td>
                   <td className="px-2 py-2" style={{ color: 'var(--text-secondary)' }}>{s.subsector}</td>
                   <td className="px-2 py-2 font-medium">${formatNum(s.price)}</td>
