@@ -3,8 +3,8 @@ Database connection module for Supabase.
 Uses service role key for write access (pipeline).
 """
 import os
-import math
 import json
+import math
 from supabase import create_client, Client
 
 
@@ -16,46 +16,59 @@ def get_client() -> Client:
     return create_client(url, key)
 
 
-def scrub_row(row):
-    """Aggressively clean every value in a row before JSON serialization."""
-    clean = {}
-    for k, v in row.items():
-        if v is None:
-            clean[k] = None
-        elif isinstance(v, str):
-            if v.lower() in ('inf', '-inf', 'infinity', '-infinity', 'nan'):
-                clean[k] = None
-            else:
-                clean[k] = v
-        elif isinstance(v, (int, bool)):
-            clean[k] = v
+class SafeEncoder(json.JSONEncoder):
+    """JSON encoder that converts inf, -inf, NaN, and numpy types to None."""
+    def default(self, obj):
+        try:
+            val = float(obj)
+            if math.isnan(val) or math.isinf(val):
+                return None
+            return val
+        except (TypeError, ValueError, OverflowError):
+            return str(obj)
+
+    def encode(self, obj):
+        obj = self._sanitize(obj)
+        return super().encode(obj)
+
+    def _sanitize(self, obj):
+        if isinstance(obj, dict):
+            return {k: self._sanitize(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [self._sanitize(v) for v in obj]
+        elif isinstance(obj, float):
+            if math.isnan(obj) or math.isinf(obj):
+                return None
+            return obj
         else:
             try:
-                fv = float(v)
-                if math.isnan(fv) or math.isinf(fv):
-                    clean[k] = None
-                else:
-                    clean[k] = v
+                val = float(obj)
+                if math.isnan(val) or math.isinf(val):
+                    return None
             except (TypeError, ValueError, OverflowError):
-                clean[k] = v
-    return clean
+                pass
+            return obj
+
+
+def force_clean(obj):
+    """Convert entire data structure to JSON-safe format."""
+    return json.loads(json.dumps(obj, cls=SafeEncoder))
 
 
 def upsert_screener_results(client: Client, results: list[dict], run_date: str):
     """Upsert screener results for a given run date."""
-    clean_batch = []
     for row in results:
         row["run_date"] = run_date
-        clean_batch.append(scrub_row(row))
+    clean = force_clean(results)
     client.table("screener_results").upsert(
-        clean_batch, on_conflict="run_date,ticker"
+        clean, on_conflict="run_date,ticker"
     ).execute()
 
 
 def upsert_macro_indicators(client: Client, data: dict, run_date: str):
     """Upsert macro indicators for a given run date."""
     data["run_date"] = run_date
-    clean = scrub_row(data)
+    clean = force_clean(data)
     client.table("macro_indicators").upsert(
         clean, on_conflict="run_date"
     ).execute()
