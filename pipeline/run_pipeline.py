@@ -169,6 +169,13 @@ def run_pipeline():
         upsert_macro_indicators(client, macro, run_date)
         print("  Macro data saved.")
 
+        # --- Phase 5: Forward Tracking ---
+        print(f"\nPHASE 5: Forward Tracking")
+        from forward_tracking import run_forward_tracking
+
+        sp500_price = macro.get("sp500")
+        run_forward_tracking(client, results, sp500_price, run_date)
+
         # Log success
         log_run_end(client, run_id, "success", total_processed, total_failed)
         print(f"\n{'='*60}")

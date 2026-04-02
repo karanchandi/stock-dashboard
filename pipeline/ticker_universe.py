@@ -1,9 +1,14 @@
 """
-Global Ticker Universe Builder v4
-Subsectors: Oil & Gas, Uranium & Nuclear, Precious Metals,
-            Industrial & Battery Metals, Agriculture & Potash,
-            Water & Water Rights, Defense & Aerospace,
-            US Manufacturing, REIT
+Global Ticker Universe Builder v6
+19 Subsectors: Oil & Gas, Uranium & Nuclear, Precious Metals,
+               Industrial & Battery Metals, Agriculture & Potash,
+               Water & Water Rights, Defense & Aerospace,
+               US Manufacturing, REIT, Infrastructure & Construction,
+               Data Centers & AI Infrastructure, Shipping & Maritime,
+               Healthcare & Biotech, Banks & Financial Services,
+               Technology & Software, Consumer & Retail,
+               Transportation & Logistics, Electric & Renewable Utilities,
+               Other
 """
 
 # =====================================================================
@@ -245,6 +250,465 @@ EU_DEFENSE = [
     "SAB.MC",   # SAAB (if on Madrid, else SAB-B.ST)
 ]
 
+# =====================================================================
+# NEW SECTORS
+# =====================================================================
+
+# --- Infrastructure & Construction ---
+US_INFRASTRUCTURE = [
+    # Aggregates & building materials
+    "VMC",    # Vulcan Materials
+    "MLM",    # Martin Marietta
+    "CX",     # CEMEX
+    "EXP",    # Eagle Materials
+    "SMID",   # Smith-Midland
+    "SUM",    # Summit Materials
+    "USLM",   # US Lime & Minerals
+    # Engineering & construction
+    "ACM",    # AECOM
+    "J",      # Jacobs Solutions
+    "FLR",    # Fluor Corporation
+    "KBR",    # KBR Inc
+    "MTZ",    # MasTec
+    "PWR",    # Quanta Services
+    "EME",    # EMCOR Group
+    "PRIM",   # Primoris Services
+    "DY",     # Dycom Industries
+    "STRL",   # Sterling Infrastructure
+    "GVA",    # Granite Construction
+    "ROAD",   # Construction Partners
+    "WMS",    # Advanced Drainage Systems
+    # Heavy equipment & rental
+    "URI",    # United Rentals
+    "HRI",    # Herc Holdings
+    # Infrastructure focused REITs/funds
+    "PAVE",   # Global X Infrastructure ETF (not a stock but useful)
+    # Steel & structural
+    "ATKR",   # Atkore
+    "VMI",    # Valmont Industries
+    "AWI",    # Armstrong World Industries
+    "BLDR",   # Builders FirstSource
+    "FBIN",   # Fortune Brands Innovations
+]
+
+CA_INFRASTRUCTURE = [
+    "ARE.TO",   # Aecon Group
+    "BDT.TO",   # Bird Construction
+    "STN.TO",   # Stantec
+    "WSP.TO",   # WSP Global
+]
+
+EU_INFRASTRUCTURE = [
+    "VIE.PA",   # Vinci (France)
+    "BN.PA",    # Danone — actually Bouygues
+    "HO.PA",    # Bouygues — already in defense, skip
+    "STO3.DE",  # Strabag (Austria, traded Frankfurt)
+    "FER.MC",   # Ferrovial (Spain)
+    "HOLN.SW",  # Holcim (Switzerland)
+    "SIE.DE",   # Siemens
+    "SGRO.L",   # already in REITs, skip duplicate
+]
+
+# --- Data Centers & AI Infrastructure ---
+US_DATACENTERS = [
+    # Pure-play data center operators
+    "DLR",    # Digital Realty — already in REITs but key DC play
+    "EQIX",   # Equinix — already in REITs
+    # Data center infrastructure
+    "VRT",    # Vertiv Holdings — cooling/power for DCs
+    "POWL",   # Powell Industries — electrical equipment
+    "AAON",   # AAON — HVAC for data centers
+    "GEV",    # GE Vernova — already in nuclear, power generation
+    # AI/cloud infrastructure
+    "NVDA",   # NVIDIA
+    "AMD",    # AMD
+    "AVGO",   # Broadcom
+    "MRVL",   # Marvell Technology
+    "ANET",   # Arista Networks — DC networking
+    "CDNS",   # Cadence Design Systems
+    "SNPS",   # Synopsys
+    "SMCI",   # Super Micro Computer — AI servers
+    "DELL",   # Dell Technologies
+    "HPE",    # Hewlett Packard Enterprise
+    # Power for data centers
+    "ETN",    # Eaton — already in manufacturing
+    "GNRC",   # Generac — already in manufacturing
+    "AES",    # AES Corporation — renewable power
+    "NEE",    # NextEra Energy
+    "SO",     # Southern Company
+    "DUK",    # Duke Energy
+    # Fiber & connectivity
+    "AMT",    # American Tower — already in REITs
+    "SBAC",   # SBA Communications
+    "UNIT",   # Uniti Group
+    "LUMN",   # Lumen Technologies
+    # Cloud platforms (for completeness)
+    "CRM",    # Salesforce
+    "ORCL",   # Oracle — cloud + DC buildout
+    "DDOG",   # Datadog — monitoring
+]
+
+# --- Shipping & Maritime ---
+US_SHIPPING = [
+    # Tankers
+    "STNG",   # Scorpio Tankers
+    "INSW",   # International Seaways
+    "FRO",    # Frontline
+    "TNK",    # Teekay Tankers
+    "NAT",    # Nordic American Tankers
+    "DHT",    # DHT Holdings
+    "EURN",   # Euronav (now CMB.Tech)
+    "ASC",    # Ardmore Shipping
+    "TNP",    # Tsakos Energy Navigation
+    # Dry bulk
+    "GOGL",   # Golden Ocean
+    "SBLK",   # Star Bulk Carriers
+    "GNK",    # Genco Shipping
+    "DSX",    # Diana Shipping
+    "SB",     # Safe Bulkers
+    "EDRY",   # EuroDry
+    # Container
+    "ZIM",    # ZIM Integrated Shipping
+    "MATX",   # Matson
+    "DAC",    # Danaos Corporation
+    "TRMD",   # TORM (product tankers)
+    # LNG carriers
+    "FLNG",   # FLEX LNG
+    "GLNG",   # Golar LNG
+    "KNOP",   # KNOT Offshore Partners
+    # Offshore & marine services
+    "TDW",    # Tidewater
+    "HLX",    # Helix Energy Solutions
+    "CLVR",   # Clever Leaves (not shipping — skip)
+    "NMM",    # Navios Maritime Partners
+    # Shipbuilding
+    "HII",    # Huntington Ingalls — already in defense
+    "GD",     # General Dynamics — already in defense
+    "KEX",    # Kirby Corporation — inland marine
+]
+
+EU_SHIPPING = [
+    "HLAG.DE",  # Hapag-Lloyd (Germany)
+    "MAERSK-B.CO", # Maersk (Denmark)
+]
+
+# --- Healthcare & Biotech ---
+US_HEALTHCARE = [
+    # Big pharma
+    "JNJ",    # Johnson & Johnson
+    "PFE",    # Pfizer
+    "MRK",    # Merck
+    "ABBV",   # AbbVie
+    "LLY",    # Eli Lilly
+    "BMY",    # Bristol-Myers Squibb
+    "AMGN",   # Amgen
+    "GILD",   # Gilead Sciences
+    "REGN",   # Regeneron
+    "VRTX",   # Vertex Pharmaceuticals
+    "BIIB",   # Biogen
+    "ZTS",    # Zoetis
+    # Biotech
+    "MRNA",   # Moderna
+    "BNTX",   # BioNTech
+    "SGEN",   # Seagen (if still listed)
+    "ALNY",   # Alnylam Pharmaceuticals
+    "SRPT",   # Sarepta Therapeutics
+    "RARE",   # Ultragenyx
+    "IONS",   # Ionis Pharmaceuticals
+    "BMRN",   # BioMarin
+    "NBIX",   # Neurocrine Biosciences
+    "PCVX",   # Vaxcyte
+    "ARGX",   # argenx (Dutch, US-listed)
+    # Medical devices
+    "MDT",    # Medtronic
+    "SYK",    # Stryker
+    "BSX",    # Boston Scientific
+    "ISRG",   # Intuitive Surgical
+    "ABT",    # Abbott Labs
+    "EW",     # Edwards Lifesciences
+    "BDX",    # Becton Dickinson
+    "BAX",    # Baxter International
+    "ZBH",    # Zimmer Biomet
+    "HOLX",   # Hologic
+    # Health services & insurance
+    "UNH",    # UnitedHealth
+    "ELV",    # Elevance Health
+    "CI",     # Cigna
+    "HUM",    # Humana
+    "CNC",    # Centene — note conflict with CA mining ticker
+    "HCA",    # HCA Healthcare
+    "THC",    # Tenet Healthcare
+    # Healthcare IT
+    "VEEV",   # Veeva Systems
+    "DOCS",   # Doximity
+]
+
+EU_HEALTHCARE = [
+    "ROG.SW",   # Roche (Switzerland)
+    "NOVN.SW",  # Novartis (Switzerland)
+    "AZN.L",    # AstraZeneca (UK)
+    "GSK.L",    # GSK (UK)
+    "SAN.PA",   # Sanofi (France)
+    "NOVO-B.CO", # Novo Nordisk (Denmark)
+    "BAYN.DE",  # Bayer (Germany)
+]
+
+# --- Banks & Financial Services ---
+US_BANKS = [
+    # Money center / large banks
+    "JPM",    # JPMorgan Chase
+    "BAC",    # Bank of America
+    "WFC",    # Wells Fargo
+    "C",      # Citigroup
+    "GS",     # Goldman Sachs
+    "MS",     # Morgan Stanley
+    "USB",    # US Bancorp
+    "TFC",    # Truist Financial
+    "PNC",    # PNC Financial
+    "COF",    # Capital One
+    "BK",     # Bank of New York Mellon
+    "STT",    # State Street
+    "SCHW",   # Charles Schwab
+    # Regional banks (relevant for RE lending)
+    "FITB",   # Fifth Third Bank
+    "KEY",    # KeyCorp — note conflict with CA energy
+    "RF",     # Regions Financial
+    "HBAN",   # Huntington Bancshares
+    "MTB",    # M&T Bank
+    "CFG",    # Citizens Financial
+    "ZION",   # Zions Bancorp
+    "FHN",    # First Horizon
+    "EWBC",   # East West Bancorp
+    "WAL",    # Western Alliance
+    "PACW",   # PacWest (if still listed)
+    "FRC",    # First Republic (if still listed)
+    "COLB",   # Columbia Banking
+    "SIVB",   # SVB Financial (if still listed)
+    "GBCI",   # Glacier Bancorp
+    "SFBS",   # ServisFirst Bancshares
+    "CADE",   # Cadence Bank
+    # Insurance
+    "BRK-B",  # Berkshire Hathaway
+    "PGR",    # Progressive
+    "ALL",    # Allstate
+    "TRV",    # Travelers
+    "MET",    # MetLife
+    "AIG",    # AIG
+    "AFL",    # Aflac
+    # Asset managers & exchanges
+    "BLK",    # BlackRock
+    "TROW",   # T. Rowe Price
+    "IVZ",    # Invesco
+    "BEN",    # Franklin Templeton
+    "ICE",    # Intercontinental Exchange
+    "CME",    # CME Group
+    "NDAQ",   # Nasdaq Inc
+]
+
+CA_BANKS = [
+    "RY.TO",    # Royal Bank of Canada
+    "TD.TO",    # Toronto-Dominion
+    "BNS.TO",   # Bank of Nova Scotia
+    "BMO.TO",   # Bank of Montreal
+    "CM.TO",    # CIBC
+    "MFC.TO",   # Manulife
+    "SLF.TO",   # Sun Life Financial
+]
+
+EU_BANKS = [
+    "HSBA.L",   # HSBC (UK)
+    "LLOY.L",   # Lloyds Banking Group (UK)
+    "BARC.L",   # Barclays (UK)
+    "BNP.PA",   # BNP Paribas (France)
+    "SAN.MC",   # Santander (Spain) — note conflict with Sanofi
+    "DBK.DE",   # Deutsche Bank (Germany)
+    "UBSG.SW",  # UBS (Switzerland)
+    "CSGN.SW",  # Credit Suisse (if still listed)
+    "ING",      # ING Group (US-listed ADR)
+]
+
+# --- Technology (Software, SaaS, Mega-Cap) ---
+US_TECHNOLOGY = [
+    # Mega-cap tech
+    "AAPL",   # Apple
+    "MSFT",   # Microsoft
+    "GOOGL",  # Alphabet
+    "META",   # Meta Platforms
+    "AMZN",   # Amazon
+    "TSLA",   # Tesla
+    "NFLX",   # Netflix
+    # Enterprise software / SaaS
+    "CRM",    # Salesforce — may dupe with DC list
+    "ADBE",   # Adobe
+    "NOW",    # ServiceNow
+    "INTU",   # Intuit
+    "WDAY",   # Workday
+    "TEAM",   # Atlassian
+    "HUBS",   # HubSpot
+    "ZM",     # Zoom
+    "SNOW",   # Snowflake
+    "MDB",    # MongoDB
+    "DDOG",   # Datadog — may dupe
+    "NET",    # Cloudflare — may dupe with defense
+    "SHOP",   # Shopify
+    "SQ",     # Block (Square)
+    "PYPL",   # PayPal
+    "COIN",   # Coinbase
+    "HOOD",   # Robinhood
+    # Semiconductors (leaders not in manufacturing list)
+    "TSM",    # TSMC
+    "ASML",   # ASML
+    "KLAC",   # KLA Corp
+    "LRCX",   # Lam Research
+    "AMAT",   # Applied Materials
+    # IT services & consulting
+    "ACN",    # Accenture
+    "IBM",    # IBM
+    "CTSH",   # Cognizant
+    "EPAM",   # EPAM Systems
+    "GLOB",   # Globant
+]
+
+# --- Consumer & Retail ---
+US_CONSUMER = [
+    # Big box / general retail
+    "WMT",    # Walmart
+    "COST",   # Costco
+    "TGT",    # Target
+    "DG",     # Dollar General
+    "DLTR",   # Dollar Tree
+    "BJ",     # BJ's Wholesale
+    # Ecommerce / marketplace
+    "AMZN",   # Amazon — dupe, will be deduped
+    "EBAY",   # eBay
+    "ETSY",   # Etsy
+    "W",      # Wayfair
+    "CHWY",   # Chewy
+    # Grocery & staples
+    "KR",     # Kroger
+    "ACI",    # Albertsons
+    "SFM",    # Sprouts Farmers Market
+    "GO",     # Grocery Outlet
+    # Restaurants & food service
+    "MCD",    # McDonald's
+    "SBUX",   # Starbucks
+    "CMG",    # Chipotle
+    "YUM",    # Yum! Brands
+    "DPZ",    # Domino's
+    "QSR",    # Restaurant Brands (Burger King, Tim Hortons)
+    "WING",   # Wingstop
+    "CAVA",   # CAVA Group
+    "SHAK",   # Shake Shack
+    "DIN",    # Dine Brands (Applebees, IHOP)
+    "TXRH",   # Texas Roadhouse
+    "DENN",   # Denny's
+    # Specialty retail
+    "HD",     # Home Depot
+    "LOW",    # Lowe's
+    "TJX",    # TJ Maxx
+    "ROST",   # Ross Stores
+    "BBY",    # Best Buy
+    "ULTA",   # Ulta Beauty
+    "NKE",    # Nike
+    "LULU",   # Lululemon
+    # Consumer brands
+    "KO",     # Coca-Cola
+    "PEP",    # PepsiCo
+    "MNST",   # Monster Beverage
+    "STZ",    # Constellation Brands
+    "TAP",    # Molson Coors
+    "HSY",    # Hershey
+    "GIS",    # General Mills
+    "K",      # Kellanova — note conflict with CA gold ticker
+    "CPB",    # Campbell Soup
+]
+
+# --- Transportation & Logistics ---
+US_TRANSPORTATION = [
+    # Railroads
+    "UNP",    # Union Pacific
+    "CSX",    # CSX Corporation
+    "NSC",    # Norfolk Southern
+    "CP",     # Canadian Pacific Kansas City
+    # Trucking & freight
+    "ODFL",   # Old Dominion Freight Line
+    "SAIA",   # Saia Inc
+    "XPO",    # XPO Inc
+    "SNDR",   # Schneider National
+    "WERN",   # Werner Enterprises
+    "JBHT",   # J.B. Hunt Transport
+    "KNX",    # Knight-Swift
+    "LSTR",   # Landstar System
+    # Package delivery
+    "UPS",    # UPS
+    "FDX",    # FedEx
+    # Airlines
+    "DAL",    # Delta Air Lines
+    "UAL",    # United Airlines
+    "LUV",    # Southwest Airlines
+    "AAL",    # American Airlines
+    "JBLU",   # JetBlue
+    "ALK",    # Alaska Air
+    "RYAAY",  # Ryanair (Ireland, US-listed)
+    # Ride-hailing & mobility
+    "UBER",   # Uber
+    "LYFT",   # Lyft
+    # Logistics & supply chain
+    "CHRW",   # C.H. Robinson
+    "EXPD",   # Expeditors International
+    "GXO",    # GXO Logistics
+    "FWRD",   # Forward Air
+]
+
+CA_TRANSPORTATION = [
+    "CNR.TO",   # Canadian National Railway
+    "TFI.TO",   # TFI International
+    "AC.TO",    # Air Canada
+]
+
+# --- Utilities (Electric, Renewable, Multi) ---
+US_UTILITIES = [
+    # Electric utilities
+    "NEE",    # NextEra Energy — may dupe with DC list
+    "SO",     # Southern Company — may dupe
+    "DUK",    # Duke Energy — may dupe
+    "D",      # Dominion Energy
+    "AEP",    # American Electric Power
+    "EXC",    # Excelion
+    "SRE",    # Sempra
+    "PCG",    # PG&E
+    "ED",     # Consolidated Edison
+    "WEC",    # WEC Energy
+    "ES",     # Eversource Energy
+    "AEE",    # Ameren
+    "CMS",    # CMS Energy
+    "PPL",    # PPL Corporation
+    "FE",     # FirstEnergy
+    "NRG",    # NRG Energy
+    "ATO",    # Atmos Energy (gas)
+    # Renewables
+    "ENPH",   # Enphase Energy
+    "SEDG",   # SolarEdge
+    "FSLR",   # First Solar
+    "RUN",    # Sunrun
+    "NOVA",   # Sunnova Energy
+    "CSIQ",   # Canadian Solar
+    "JKS",    # JinkoSolar
+    "PLUG",   # Plug Power
+    "BE",     # Bloom Energy
+    "ARRY",   # Array Technologies
+    # Independent power producers
+    "VST",    # Vistra — may dupe with nuclear
+    "CEG",    # Constellation Energy — may dupe
+    "TLN",    # Talen Energy — may dupe
+    "ORA",    # Ormat Technologies (geothermal)
+]
+
+UK_UTILITIES = [
+    "SSE.L",    # SSE
+    "NG.L",     # National Grid
+]
+
 SG_REITS = [
     "A17U.SI", "N2IU.SI", "ME8U.SI", "C38U.SI", "BUOU.SI",
     "J69U.SI", "M44U.SI", "H78.SI",
@@ -301,6 +765,35 @@ def build_universe():
     # Europe
     add(EU_DEFENSE, "Industrials", "Defense & Aerospace", "EU")
     add(DE_AGRICULTURE, "Materials", "Agriculture & Potash", "XETRA")
+
+    # New sectors — US
+    add(US_INFRASTRUCTURE, "Industrials", "Infrastructure & Construction", "US")
+    add(US_DATACENTERS, "Technology", "Data Centers & AI Infrastructure", "US")
+    add(US_SHIPPING, "Industrials", "Shipping & Maritime", "US")
+    add(US_HEALTHCARE, "Healthcare", "Healthcare & Biotech", "US")
+    add(US_BANKS, "Financials", "Banks & Financial Services", "US")
+
+    # New sectors — Canada
+    add(CA_INFRASTRUCTURE, "Industrials", "Infrastructure & Construction", "TSX")
+    add(CA_BANKS, "Financials", "Banks & Financial Services", "TSX")
+
+    # New sectors — Europe
+    add(EU_INFRASTRUCTURE, "Industrials", "Infrastructure & Construction", "EU")
+    add(EU_SHIPPING, "Industrials", "Shipping & Maritime", "EU")
+    add(EU_HEALTHCARE, "Healthcare", "Healthcare & Biotech", "EU")
+    add(EU_BANKS, "Financials", "Banks & Financial Services", "EU")
+
+    # Additional sectors — US
+    add(US_TECHNOLOGY, "Technology", "Technology & Software", "US")
+    add(US_CONSUMER, "Consumer", "Consumer & Retail", "US")
+    add(US_TRANSPORTATION, "Industrials", "Transportation & Logistics", "US")
+    add(US_UTILITIES, "Utilities", "Electric & Renewable Utilities", "US")
+
+    # Additional sectors — Canada
+    add(CA_TRANSPORTATION, "Industrials", "Transportation & Logistics", "TSX")
+
+    # Additional sectors — UK
+    add(UK_UTILITIES, "Utilities", "Electric & Renewable Utilities", "LSE")
 
     # Other
     add(FR_WATER, "Utilities", "Water & Water Rights", "US")

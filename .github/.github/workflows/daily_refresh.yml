@@ -1,16 +1,16 @@
-name: Stock Dashboard Daily Refresh
+name: MarketPulse Daily Refresh
 
 on:
   schedule:
     # Run daily at 9:00 UTC (2:00 AM Pacific)
     - cron: '0 9 * * *'
   workflow_dispatch:
-    # Allows manual trigger from GitHub Actions tab
+    # Allows manual trigger from GitHub Actions tab or MarketPulse dashboard
 
 jobs:
   refresh-data:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
 
     steps:
       - name: Checkout code
