@@ -34,8 +34,8 @@ export default function TickerFeed({ ticker }: TickerFeedProps) {
       setLoading(true);
 
       const [newsRes, sentRes] = await Promise.all([
-        fetch(`/api/news?ticker=${encodeURIComponent(ticker)}`).then(r => r.json()).catch(() => ({ articles: [] })),
-        fetch(`/api/sentiment?ticker=${encodeURIComponent(ticker)}`).then(r => r.json()).catch(() => null),
+        fetch(`/api/news?ticker=${encodeURIComponent(ticker)}&t=${Date.now()}`).then(r => r.json()).catch(() => ({ articles: [] })),
+        fetch(`/api/sentiment?ticker=${encodeURIComponent(ticker)}&t=${Date.now()}`).then(r => r.json()).catch(() => null),
       ]);
 
       setNews(newsRes.articles || []);
@@ -44,6 +44,17 @@ export default function TickerFeed({ ticker }: TickerFeedProps) {
     }
     fetchAll();
   }, [ticker]);
+
+  async function refreshFeed() {
+    setLoading(true);
+    const [newsRes, sentRes] = await Promise.all([
+      fetch(`/api/news?ticker=${encodeURIComponent(ticker)}&t=${Date.now()}`).then(r => r.json()).catch(() => ({ articles: [] })),
+      fetch(`/api/sentiment?ticker=${encodeURIComponent(ticker)}&t=${Date.now()}`).then(r => r.json()).catch(() => null),
+    ]);
+    setNews(newsRes.articles || []);
+    setSentiment(sentRes);
+    setLoading(false);
+  }
 
   const tabs = [
     { key: 'news' as const, label: `News (${news.length})` },
@@ -67,7 +78,7 @@ export default function TickerFeed({ ticker }: TickerFeedProps) {
       )}
 
       {/* Tabs */}
-      <div className="flex gap-1 px-3 pt-2">
+      <div className="flex items-center gap-1 px-3 pt-2">
         {tabs.map(t => (
           <button
             key={t.key}
@@ -81,6 +92,13 @@ export default function TickerFeed({ ticker }: TickerFeedProps) {
             {t.label}
           </button>
         ))}
+        <button
+          onClick={refreshFeed}
+          className="ml-auto text-xs px-2 py-0.5 rounded font-medium"
+          style={{ background: 'var(--brand-light)', color: 'var(--brand)' }}
+        >
+          ↻ Refresh
+        </button>
       </div>
 
       {/* Content */}

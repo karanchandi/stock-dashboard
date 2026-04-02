@@ -107,10 +107,12 @@ export default function StockScreener({ stocks, onSelectTicker, onAddToWatchlist
     if (preset.search && preset.search.includes(',')) {
       const tickers = new Set<string>(preset.search.split(',').map((t: string) => t.trim()));
       setSelectedTickers(tickers);
+      setFilterBySelected(true);
       setSearchTerm('');
     } else {
       setSearchTerm(preset.search || '');
       setSelectedTickers(new Set());
+      setFilterBySelected(false);
     }
   }
 
@@ -121,6 +123,7 @@ export default function StockScreener({ stocks, onSelectTicker, onAddToWatchlist
     setSortAsc(false);
     setSearchTerm('');
     setSelectedTickers(new Set());
+    setFilterBySelected(false);
   }
 
   async function deletePreset(id: number) {
@@ -135,6 +138,17 @@ export default function StockScreener({ stocks, onSelectTicker, onAddToWatchlist
     setSelectedTickers(next);
   }
 
+  const [filterBySelected, setFilterBySelected] = useState(false);
+
+  function applyTickerFilter() {
+    if (selectedTickers.size > 0) setFilterBySelected(true);
+  }
+
+  function clearTickerFilter() {
+    setFilterBySelected(false);
+    setSelectedTickers(new Set());
+  }
+
   const subsectors = useMemo(() => {
     const subs = [...new Set(stocks.map((s) => s.subsector).filter(Boolean))].sort();
     return ['All', ...subs];
@@ -145,7 +159,7 @@ export default function StockScreener({ stocks, onSelectTicker, onAddToWatchlist
     if (filterSubsector !== 'All') {
       result = result.filter((s) => s.subsector === filterSubsector);
     }
-    if (selectedTickers.size > 0) {
+    if (filterBySelected && selectedTickers.size > 0) {
       result = result.filter((s) => selectedTickers.has(s.ticker));
     } else if (searchTerm) {
       const term = searchTerm.toLowerCase();
@@ -270,9 +284,15 @@ export default function StockScreener({ stocks, onSelectTicker, onAddToWatchlist
           ))}
         </div>
         <div className="flex items-center gap-2 ml-auto">
-          <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{filtered.length} stocks{selectedTickers.size > 0 ? ` (${selectedTickers.size} selected)` : ''}</span>
-          {selectedTickers.size > 0 && (
-            <button onClick={() => setSelectedTickers(new Set())} className="text-xs px-2 py-0.5 rounded" style={{ color: 'var(--red)', background: 'var(--red-light)' }}>Clear selection</button>
+          <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{filtered.length} stocks{selectedTickers.size > 0 ? ` · ${selectedTickers.size} selected` : ''}</span>
+          {selectedTickers.size > 0 && !filterBySelected && (
+            <button onClick={applyTickerFilter} className="text-xs px-2 py-0.5 rounded font-medium" style={{ color: 'white', background: 'var(--brand)' }}>Show selected only</button>
+          )}
+          {filterBySelected && (
+            <button onClick={clearTickerFilter} className="text-xs px-2 py-0.5 rounded" style={{ color: 'var(--red)', background: 'var(--red-light)' }}>Show all</button>
+          )}
+          {selectedTickers.size > 0 && !filterBySelected && (
+            <button onClick={() => setSelectedTickers(new Set())} className="text-xs px-2 py-0.5 rounded" style={{ color: 'var(--text-secondary)', background: 'var(--bg-secondary)' }}>Clear selection</button>
           )}
           <button onClick={exportToExcel} className="px-2.5 py-1 rounded-md text-xs font-medium" style={{ background: 'var(--bg-primary)', border: '0.5px solid var(--border)', color: 'var(--text-secondary)' }}>
             Export Excel
@@ -337,11 +357,12 @@ export default function StockScreener({ stocks, onSelectTicker, onAddToWatchlist
                   <>
                     <tr
                       key={s.ticker + i}
-                      className="transition-all"
+                      className="transition-all cursor-pointer hover:opacity-80"
                       style={{
                         borderBottom: expandedTicker === s.ticker ? 'none' : '0.5px solid var(--border)',
                         background: isSelected ? 'var(--brand-light)' : expandedTicker === s.ticker ? 'var(--bg-secondary)' : 'transparent',
                       }}
+                      onClick={() => handleTickerClick(s.ticker)}
                     >
                       <td className="px-2 py-2 text-center" onClick={e => e.stopPropagation()}>
                         <input
@@ -351,7 +372,7 @@ export default function StockScreener({ stocks, onSelectTicker, onAddToWatchlist
                           style={{ accentColor: 'var(--brand)', cursor: 'pointer' }}
                         />
                       </td>
-                      <td className="px-2 py-2 font-bold cursor-pointer" style={{ color: 'var(--brand)' }} onClick={() => handleTickerClick(s.ticker)}>{s.ticker}</td>
+                      <td className="px-2 py-2 font-bold" style={{ color: 'var(--brand)' }}>{s.ticker}</td>
                       <td className="px-2 py-2 max-w-[130px] truncate" style={{ color: 'var(--text-secondary)' }}>{s.name}</td>
                       <td className="px-2 py-2" style={{ color: 'var(--text-secondary)' }}>{s.subsector}</td>
                       <td className="px-2 py-2" style={{ color: 'var(--text-secondary)' }}>{formatMarketCap(s.market_cap)}</td>

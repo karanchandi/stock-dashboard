@@ -149,7 +149,30 @@ export default function MacroDashboard({ data }: { data: MacroData | null }) {
             <DailyChange change={data.vix_daily_change} pct={data.vix_daily_change_pct} />
           </div>
           <YoYChange pct={data.vix_yoy_pct} />
-          <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>{getSignalNote('vix', data)}</p>
+          <div className="mt-1">
+            <SignalBadge color={data.vix_signal || 'yellow'} text={getSignalNote('vix', data)} />
+          </div>
+          {/* VIX gauge — scale 0 to 50+ */}
+          <div className="mt-3 relative h-3 rounded-full overflow-hidden" style={{ background: 'linear-gradient(to right, #1D9E75 0%, #1D9E75 30%, #EF9F27 30%, #EF9F27 50%, #E24B4A 50%, #E24B4A 100%)' }}>
+            <div
+              className="absolute top-0 w-1.5 h-full rounded"
+              style={{ left: `${Math.min(100, Math.max(0, (data.vix || 0) / 50 * 100))}%`, background: 'var(--text-primary)', boxShadow: '0 0 3px rgba(0,0,0,0.3)' }}
+            />
+          </div>
+          <div className="flex justify-between text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+            <span>Calm</span>
+            <span style={{ position: 'relative', left: '-10%' }}>15</span>
+            <span>25</span>
+            <span>Extreme</span>
+          </div>
+          {/* Historical context */}
+          <div className="flex gap-3 mt-2 text-xs" style={{ color: 'var(--text-tertiary)' }}>
+            <span>Avg: ~19</span>
+            <span>·</span>
+            <span>COVID peak: 82</span>
+            <span>·</span>
+            <span>2022 high: 36</span>
+          </div>
         </Card>
       </div>
 

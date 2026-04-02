@@ -52,8 +52,9 @@ def run_pipeline():
                 data["value_score"] = round(composite, 2) if composite else None
                 data["market_cap_tier"] = categorize_market_cap(data.get("market_cap"))
                 data["analyst_score"] = score_analyst(data)
-                if data.get("dividend_yield"):
-                    data["dividend_yield_pct"] = round(data["dividend_yield"] * 100, 2)
+                # yfinance returns dividendYield already as percentage (e.g. 5.22 = 5.22%)
+                if data.get("dividend_yield") is not None:
+                    data["dividend_yield_pct"] = round(data["dividend_yield"], 2)
                 results.append(data)
             else:
                 errors.append(ticker)
@@ -76,8 +77,8 @@ def run_pipeline():
                     data["value_score"] = round(composite, 2) if composite else None
                     data["market_cap_tier"] = categorize_market_cap(data.get("market_cap"))
                     data["analyst_score"] = score_analyst(data)
-                    if data.get("dividend_yield"):
-                        data["dividend_yield_pct"] = round(data["dividend_yield"] * 100, 2)
+                    if data.get("dividend_yield") is not None:
+                        data["dividend_yield_pct"] = round(data["dividend_yield"], 2)
                     results.append(data)
                 else:
                     still_failed.append(ticker_info["ticker"])

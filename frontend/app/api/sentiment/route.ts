@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const ticker = searchParams.get('ticker');
@@ -8,25 +10,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'ticker required' }, { status: 400 });
   }
 
-  const result: any = {
-    ticker,
-    stocktwits: null,
-    reddit: null,
-  };
+  const result: any = { ticker, stocktwits: null, reddit: null };
 
   // Stocktwits
   try {
     const stRes = await fetch(
       `https://api.stocktwits.com/api/2/streams/symbol/${encodeURIComponent(ticker)}.json`,
-      { 
-        headers: { 'User-Agent': 'Mozilla/5.0' },
-        next: { revalidate: 300 },
-      }
+      { headers: { 'User-Agent': 'Mozilla/5.0' }, cache: 'no-store' }
     );
     if (stRes.ok) {
       const stData = await stRes.json();
       const messages = stData.messages || [];
-      
+
       let bullish = 0;
       let bearish = 0;
       const posts = messages.slice(0, 10).map((m: any) => {
@@ -53,19 +48,16 @@ export async function GET(request: NextRequest) {
     }
   } catch {}
 
-  // Reddit - search recent posts mentioning the ticker
+  // Reddit
   try {
     const redditRes = await fetch(
       `https://www.reddit.com/search.json?q=${encodeURIComponent(ticker)}+subreddit%3Awallstreetbets+OR+subreddit%3Astocks+OR+subreddit%3Ainvesting&sort=new&limit=10&t=week`,
-      {
-        headers: { 'User-Agent': 'StockDashboard/1.0' },
-        next: { revalidate: 600 },
-      }
+      { headers: { 'User-Agent': 'MarketPulse/1.0' }, cache: 'no-store' }
     );
     if (redditRes.ok) {
       const redditData = await redditRes.json();
       const children = redditData?.data?.children || [];
-      
+
       const posts = children.map((c: any) => ({
         title: c.data.title?.substring(0, 200),
         subreddit: c.data.subreddit,

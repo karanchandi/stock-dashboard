@@ -195,7 +195,9 @@ def score_value(row):
 
     dy = safe_float(row.get("dividend_yield"))
     if dy is not None and dy > 0:
-        scores["div_yield_score"] = min(100, dy * 100 / 0.10)
+        # yfinance returns dividendYield as percentage (e.g. 5.22 = 5.22%)
+        # Score: 10% yield = 100 score
+        scores["div_yield_score"] = min(100, dy / 10 * 100)
     else:
         scores["div_yield_score"] = 0
 

@@ -59,7 +59,7 @@ export default function Home() {
         .select('*')
         .eq('run_date', latestDate)
         .order('combined_score', { ascending: false, nullsFirst: false })
-        .limit(500);
+        .limit(800);
 
       if (stockData) setStocks(stockData);
       setLoading(false);
@@ -202,7 +202,7 @@ export default function Home() {
         ) : activeTab === 'screener' ? (
           <StockScreener stocks={stocks} onSelectTicker={handleSelectTicker} onAddToWatchlist={handleAddToWatchlist} />
         ) : activeTab === 'watchlist' ? (
-          <Watchlist onSelectTicker={handleSelectTicker} latestPrices={latestPrices} />
+          <Watchlist onSelectTicker={handleSelectTicker} latestPrices={latestPrices} stocks={stocks} />
         ) : activeTab === 'alerts' ? (
           <PriceAlerts latestPrices={latestPrices} onSelectTicker={handleSelectTicker} />
         ) : null}

@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const ticker = searchParams.get('ticker');
-  const type = searchParams.get('type') || 'ticker'; // 'ticker' or 'macro'
+  const type = searchParams.get('type') || 'ticker';
 
   const articles: any[] = [];
 
   try {
     if (type === 'macro') {
-      // Macro market news from Google News RSS
       const feeds = [
         'https://news.google.com/rss/search?q=stock+market+today&hl=en-US&gl=US&ceid=US:en',
         'https://news.google.com/rss/search?q=federal+reserve+interest+rates&hl=en-US&gl=US&ceid=US:en',
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
         try {
           const res = await fetch(feedUrl, {
             headers: { 'User-Agent': 'Mozilla/5.0' },
-            next: { revalidate: 600 },
+            cache: 'no-store',
           });
           if (res.ok) {
             const xml = await res.text();
@@ -30,7 +31,6 @@ export async function GET(request: NextRequest) {
         } catch {}
       }
 
-      // Deduplicate by title similarity and sort by date
       const seen = new Set<string>();
       const unique = articles.filter(a => {
         const key = a.title.toLowerCase().substring(0, 50);
@@ -43,19 +43,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ articles: unique.slice(0, 15) });
 
     } else if (ticker) {
-      // Ticker-specific news
-      // Yahoo Finance news
-      try {
-        const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?range=5d&interval=1d`;
-        // Yahoo doesn't have a clean news endpoint we can proxy easily, so use Google News
-      } catch {}
-
-      // Google News for ticker
       const query = encodeURIComponent(`${ticker} stock`);
       try {
         const res = await fetch(
           `https://news.google.com/rss/search?q=${query}&hl=en-US&gl=US&ceid=US:en`,
-          { headers: { 'User-Agent': 'Mozilla/5.0' }, next: { revalidate: 600 } }
+          { headers: { 'User-Agent': 'Mozilla/5.0' }, cache: 'no-store' }
         );
         if (res.ok) {
           const xml = await res.text();
@@ -106,19 +98,9 @@ function extractTag(xml: string, tag: string): string {
 }
 
 function extractDomain(url: string): string {
-  try {
-    return new URL(url).hostname.replace('www.', '');
-  } catch {
-    return '';
-  }
+  try { return new URL(url).hostname.replace('www.', ''); } catch { return ''; }
 }
 
 function decodeHtmlEntities(text: string): string {
-  return text
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&#x27;/g, "'");
+  return text.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&#x27;/g, "'");
 }

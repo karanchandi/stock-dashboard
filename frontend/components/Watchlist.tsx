@@ -20,6 +20,7 @@ interface WatchlistItem {
 interface WatchlistProps {
   onSelectTicker: (ticker: string) => void;
   latestPrices: Record<string, number>;
+  stocks?: any[];
 }
 
 function fmt(v: any, decimals = 2): string {
@@ -32,7 +33,7 @@ function Signal({ color }: { color: string }) {
   return <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: colors[color] || colors.gray, marginRight: 4 }} />;
 }
 
-export default function Watchlist({ onSelectTicker, latestPrices }: WatchlistProps) {
+export default function Watchlist({ onSelectTicker, latestPrices, stocks = [] }: WatchlistProps) {
   const [items, setItems] = useState<WatchlistItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
@@ -244,29 +245,116 @@ export default function Watchlist({ onSelectTicker, latestPrices }: WatchlistPro
               <PriceChart ticker={selectedItem} compact={false} />
             </div>
 
-            {/* Key metrics */}
-            {activeItem && (
-              <div className="grid grid-cols-4 gap-3">
-                {activeItem.target_buy_price && (
-                  <div className="rounded-lg p-3" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
-                    <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Buy target</div>
-                    <div className="text-lg font-semibold" style={{ color: price && price <= activeItem.target_buy_price ? 'var(--green)' : 'var(--text-primary)' }}>
-                      ${fmt(activeItem.target_buy_price)}
+            {/* Scores & Key Metrics */}
+            {(() => {
+              const stockData = stocks.find((s: any) => s.ticker === selectedItem);
+              if (!stockData) return null;
+
+              function scoreColor(score: number | null): string {
+                if (score == null) return 'gray';
+                if (score >= 65) return 'green';
+                if (score >= 40) return 'yellow';
+                return 'red';
+              }
+              const sigColors: Record<string, string> = { green: '#1D9E75', yellow: '#EF9F27', red: '#E24B4A', gray: '#9ca3af' };
+
+              return (
+                <div className="space-y-3">
+                  {/* Scores row */}
+                  <div className="grid grid-cols-4 gap-3">
+                    <div className="rounded-lg p-3" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
+                      <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Overall Rating</div>
+                      <div className="text-xl font-bold mt-0.5" style={{ color: sigColors[scoreColor(stockData.combined_score)] }}>
+                        {stockData.combined_score?.toFixed(1) ?? '-'}
+                      </div>
                     </div>
-                    {price && <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{((price - activeItem.target_buy_price) / activeItem.target_buy_price * 100).toFixed(1)}% away</div>}
-                  </div>
-                )}
-                {activeItem.target_sell_price && (
-                  <div className="rounded-lg p-3" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
-                    <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Sell target</div>
-                    <div className="text-lg font-semibold" style={{ color: price && price >= activeItem.target_sell_price ? 'var(--red)' : 'var(--text-primary)' }}>
-                      ${fmt(activeItem.target_sell_price)}
+                    <div className="rounded-lg p-3" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
+                      <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Value Score</div>
+                      <div className="text-lg font-semibold mt-0.5" style={{ color: sigColors[scoreColor(stockData.value_score)] }}>
+                        {stockData.value_score?.toFixed(1) ?? '-'}
+                      </div>
                     </div>
-                    {price && <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{((activeItem.target_sell_price - price) / price * 100).toFixed(1)}% away</div>}
+                    <div className="rounded-lg p-3" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
+                      <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Analyst Score</div>
+                      <div className="text-lg font-semibold mt-0.5" style={{ color: sigColors[scoreColor(stockData.analyst_score)] }}>
+                        {stockData.analyst_score?.toFixed(1) ?? '-'}
+                      </div>
+                    </div>
+                    <div className="rounded-lg p-3" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
+                      <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Insider Score</div>
+                      <div className="text-lg font-semibold mt-0.5" style={{ color: sigColors[scoreColor(stockData.insider_score)] }}>
+                        {stockData.insider_score?.toFixed(1) ?? '-'}
+                      </div>
+                    </div>
                   </div>
-                )}
-              </div>
-            )}
+
+                  {/* Key metrics grid */}
+                  <div className="grid grid-cols-4 gap-3">
+                    <div className="rounded-lg p-3" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
+                      <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Market Cap</div>
+                      <div className="text-sm font-semibold mt-0.5">{stockData.market_cap ? (stockData.market_cap >= 1e12 ? `$${(stockData.market_cap/1e12).toFixed(1)}T` : stockData.market_cap >= 1e9 ? `$${(stockData.market_cap/1e9).toFixed(1)}B` : `$${(stockData.market_cap/1e6).toFixed(0)}M`) : '-'}</div>
+                    </div>
+                    <div className="rounded-lg p-3" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
+                      <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>P/E Ratio</div>
+                      <div className="text-sm font-semibold mt-0.5">{stockData.pe_ratio?.toFixed(1) ?? '-'}</div>
+                    </div>
+                    <div className="rounded-lg p-3" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
+                      <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Target Price</div>
+                      <div className="text-sm font-semibold mt-0.5">{stockData.target_price ? `$${stockData.target_price.toFixed(2)}` : '-'}</div>
+                    </div>
+                    <div className="rounded-lg p-3" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
+                      <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Upside</div>
+                      <div className="text-sm font-semibold mt-0.5" style={{ color: stockData.upside_pct > 0 ? '#1D9E75' : stockData.upside_pct < 0 ? '#E24B4A' : 'var(--text-primary)' }}>
+                        {stockData.upside_pct ? `${stockData.upside_pct > 0 ? '+' : ''}${stockData.upside_pct.toFixed(1)}%` : '-'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-3">
+                    <div className="rounded-lg p-3" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
+                      <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Div Yield</div>
+                      <div className="text-sm font-semibold mt-0.5">{stockData.dividend_yield_pct ? `${stockData.dividend_yield_pct.toFixed(2)}%` : 'None'}</div>
+                    </div>
+                    <div className="rounded-lg p-3" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
+                      <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Consensus</div>
+                      <div className="text-sm font-semibold mt-0.5 capitalize">{stockData.analyst_consensus || '-'}</div>
+                    </div>
+                    <div className="rounded-lg p-3" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
+                      <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Next Earnings</div>
+                      <div className="text-sm font-semibold mt-0.5">{stockData.next_earnings_date ? new Date(stockData.next_earnings_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '-'}</div>
+                    </div>
+                    <div className="rounded-lg p-3" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
+                      <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>EV/EBITDA</div>
+                      <div className="text-sm font-semibold mt-0.5">{stockData.ev_ebitda?.toFixed(1) ?? '-'}</div>
+                    </div>
+                  </div>
+
+                  {/* Targets row */}
+                  {(activeItem?.target_buy_price || activeItem?.target_sell_price) && (
+                    <div className="grid grid-cols-2 gap-3">
+                      {activeItem.target_buy_price && (
+                        <div className="rounded-lg p-3" style={{ background: 'var(--green-light)', border: '1px solid var(--border)' }}>
+                          <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Buy target</div>
+                          <div className="text-lg font-semibold" style={{ color: price && price <= activeItem.target_buy_price ? 'var(--green)' : 'var(--text-primary)' }}>
+                            ${fmt(activeItem.target_buy_price)}
+                          </div>
+                          {price && <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{((price - activeItem.target_buy_price) / activeItem.target_buy_price * 100).toFixed(1)}% away</div>}
+                        </div>
+                      )}
+                      {activeItem.target_sell_price && (
+                        <div className="rounded-lg p-3" style={{ background: 'var(--red-light)', border: '1px solid var(--border)' }}>
+                          <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Sell target</div>
+                          <div className="text-lg font-semibold" style={{ color: price && price >= activeItem.target_sell_price ? 'var(--red)' : 'var(--text-primary)' }}>
+                            ${fmt(activeItem.target_sell_price)}
+                          </div>
+                          {price && <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{((activeItem.target_sell_price - price) / price * 100).toFixed(1)}% away</div>}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* News & Sentiment */}
             <TickerFeed ticker={selectedItem} />

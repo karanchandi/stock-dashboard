@@ -44,6 +44,13 @@ function fmtPct(v: any): string {
   return `${n > 0 ? '+' : ''}${n.toFixed(2)}%`;
 }
 
+function fmtGrowth(v: any): string {
+  if (v == null) return '-';
+  const pct = Number(v) * 100;
+  if (Math.abs(pct) > 999) return `${pct > 0 ? '>' : '<'}${pct > 0 ? '+' : '-'}999%`;
+  return `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`;
+}
+
 function fmtMcap(mc: any): string {
   if (mc == null) return '-';
   const n = Number(mc);
@@ -210,8 +217,8 @@ export default function StockDetail({ ticker, onBack, onAddToWatchlist }: StockD
         <div className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: 'var(--text-secondary)' }}>Financials</div>
         <div className="grid grid-cols-4 gap-3">
           <Card label="Market cap"><div className="text-lg font-semibold">{fmtMcap(s.market_cap)}</div></Card>
-          <Card label="Revenue growth"><div className="text-lg font-semibold" style={{ color: s.revenue_growth > 0 ? '#1D9E75' : s.revenue_growth < 0 ? '#E24B4A' : 'var(--text-primary)' }}>{fmtPct(s.revenue_growth ? s.revenue_growth * 100 : null)}</div></Card>
-          <Card label="Earnings growth"><div className="text-lg font-semibold" style={{ color: s.earnings_growth > 0 ? '#1D9E75' : s.earnings_growth < 0 ? '#E24B4A' : 'var(--text-primary)' }}>{fmtPct(s.earnings_growth ? s.earnings_growth * 100 : null)}</div></Card>
+          <Card label="Revenue growth"><div className="text-lg font-semibold" style={{ color: s.revenue_growth > 0 ? '#1D9E75' : s.revenue_growth < 0 ? '#E24B4A' : 'var(--text-primary)' }}>{fmtGrowth(s.revenue_growth)}</div></Card>
+          <Card label="Earnings growth"><div className="text-lg font-semibold" style={{ color: s.earnings_growth > 0 ? '#1D9E75' : s.earnings_growth < 0 ? '#E24B4A' : 'var(--text-primary)' }}>{fmtGrowth(s.earnings_growth)}</div></Card>
           <Card label="Profit margin"><div className="text-lg font-semibold">{s.profit_margin ? `${(s.profit_margin * 100).toFixed(1)}%` : '-'}</div></Card>
         </div>
       </div>
@@ -283,7 +290,7 @@ export default function StockDetail({ ticker, onBack, onAddToWatchlist }: StockD
           </Card>
           <Card label="Earnings growth">
             <div className="text-lg font-semibold" style={{ color: s.earnings_growth > 0 ? '#1D9E75' : s.earnings_growth < 0 ? '#E24B4A' : 'var(--text-primary)' }}>
-              {s.earnings_growth ? `${(s.earnings_growth * 100).toFixed(1)}%` : '-'}
+              {fmtGrowth(s.earnings_growth)}
             </div>
           </Card>
         </div>
