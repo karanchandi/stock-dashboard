@@ -307,7 +307,7 @@ def build_universe():
     add(BR_AGRICULTURE, "Materials", "Agriculture & Potash", "US")
     add(HK_ENERGY, "Energy", "Oil & Gas", "HKEX")
     add(HK_INDUSTRIAL_METALS, "Materials", "Industrial & Battery Metals", "HKEX")
-    add(HK_OTHER, "Energy/Materials", "Mixed", "HKEX")
+    add(HK_OTHER, "Energy/Materials", "Other", "HKEX")
     add(SG_REITS, "Real Estate", "REIT", "SGX")
 
     seen = set()

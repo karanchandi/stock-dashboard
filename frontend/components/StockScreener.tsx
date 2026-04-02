@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import StockRowDropdown from './StockRowDropdown';
+import { supabase } from '@/lib/supabase';
 
 interface Stock {
   ticker: string;
@@ -19,6 +20,7 @@ interface Stock {
   pb_ratio: number;
   dividend_yield_pct: number;
   upside_pct: number;
+  target_price: number;
   analyst_consensus: string;
   buy_count: number;
   sell_count: number;
@@ -72,6 +74,10 @@ export default function StockScreener({ stocks, onSelectTicker, onAddToWatchlist
   const [filterSubsector, setFilterSubsector] = useState<string>('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedTicker, setExpandedTicker] = useState<string | null>(null);
+  const [alertModal, setAlertModal] = useState<{ ticker: string; price: number } | null>(null);
+  const [alertType, setAlertType] = useState('below');
+  const [alertPrice, setAlertPrice] = useState('');
+  const [alertNotes, setAlertNotes] = useState('');
 
   const subsectors = useMemo(() => {
     const subs = [...new Set(stocks.map((s) => s.subsector).filter(Boolean))].sort();
@@ -112,6 +118,24 @@ export default function StockScreener({ stocks, onSelectTicker, onAddToWatchlist
     setExpandedTicker(expandedTicker === ticker ? null : ticker);
   }
 
+  function openAlertModal(ticker: string, price: number) {
+    setAlertModal({ ticker, price });
+    setAlertPrice('');
+    setAlertNotes('');
+    setAlertType('below');
+  }
+
+  async function createAlert() {
+    if (!alertModal || !alertPrice) return;
+    await supabase.from('price_alerts').insert({
+      ticker: alertModal.ticker,
+      alert_type: alertType,
+      target_price: parseFloat(alertPrice),
+      notes: alertNotes || null,
+    });
+    setAlertModal(null);
+  }
+
   const SortHeader = ({ label, field }: { label: string; field: SortKey }) => (
     <th
       className="px-2 py-2 text-left text-xs font-medium cursor-pointer select-none whitespace-nowrap"
@@ -121,6 +145,16 @@ export default function StockScreener({ stocks, onSelectTicker, onAddToWatchlist
       {label} {sortKey === field ? (sortAsc ? '↑' : '↓') : ''}
     </th>
   );
+
+  const inputStyle = {
+    background: 'var(--bg-secondary)',
+    border: '0.5px solid var(--border)',
+    color: 'var(--text-primary)',
+    outline: 'none',
+    borderRadius: 6,
+    padding: '6px 10px',
+    fontSize: 13,
+  };
 
   if (stocks.length === 0) {
     return (
@@ -132,6 +166,43 @@ export default function StockScreener({ stocks, onSelectTicker, onAddToWatchlist
 
   return (
     <div className="space-y-4">
+      {/* Alert creation modal */}
+      {alertModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-50" style={{ background: 'rgba(0,0,0,0.4)' }}>
+          <div className="rounded-lg p-5 w-96 space-y-3" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)' }}>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                Create alert for {alertModal.ticker}
+              </h3>
+              <button onClick={() => setAlertModal(null)} className="text-xs" style={{ color: 'var(--text-secondary)' }}>Cancel</button>
+            </div>
+            <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+              Current price: ${alertModal.price.toFixed(2)}
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Alert when</label>
+                <select style={inputStyle} className="w-full" value={alertType} onChange={e => setAlertType(e.target.value)}>
+                  <option value="below">Drops below</option>
+                  <option value="above">Rises above</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Target price</label>
+                <input style={inputStyle} className="w-full" type="number" value={alertPrice} onChange={e => setAlertPrice(e.target.value)} placeholder="$" />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Notes (optional)</label>
+              <input style={inputStyle} className="w-full" value={alertNotes} onChange={e => setAlertNotes(e.target.value)} placeholder="Why this alert?" />
+            </div>
+            <button onClick={createAlert} className="w-full px-4 py-2 rounded-md text-sm font-medium" style={{ background: 'var(--text-primary)', color: 'var(--bg-primary)' }}>
+              Create alert
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Filters */}
       <div className="flex gap-3 items-center flex-wrap">
         <input
@@ -172,26 +243,26 @@ export default function StockScreener({ stocks, onSelectTicker, onAddToWatchlist
       {/* Table */}
       <div className="rounded-lg overflow-hidden" style={{ background: 'var(--bg-primary)', border: '0.5px solid var(--border)' }}>
         <div className="overflow-x-auto">
-          <table className="w-full text-xs" style={{ minWidth: 1100 }}>
+          <table className="w-full text-xs" style={{ minWidth: 1200 }}>
             <thead>
               <tr style={{ background: 'var(--bg-secondary)' }}>
                 <SortHeader label="Ticker" field="ticker" />
                 <SortHeader label="Company" field="name" />
                 <SortHeader label="Subsector" field="subsector" />
                 <SortHeader label="Price" field="price" />
+                <SortHeader label="Target" field="target_price" />
+                <SortHeader label="Upside %" field="upside_pct" />
                 <SortHeader label="Mkt cap" field="market_cap" />
                 <SortHeader label="Combined" field="combined_score" />
                 <SortHeader label="Value" field="value_score" />
                 <SortHeader label="Analyst" field="analyst_score" />
                 <SortHeader label="Insider" field="insider_score" />
                 <SortHeader label="P/E" field="pe_ratio" />
-                <SortHeader label="P/B" field="pb_ratio" />
                 <SortHeader label="Div yield" field="dividend_yield_pct" />
-                <SortHeader label="Upside %" field="upside_pct" />
                 <SortHeader label="Consensus" field="analyst_consensus" />
-                <SortHeader label="Ins buys" field="buy_count" />
-                <SortHeader label="Ins sells" field="sell_count" />
-                <SortHeader label="Ins net $" field="insider_net_value" />
+                <th className="px-2 py-2 text-left text-xs font-medium whitespace-nowrap" style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border)' }}>
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -207,9 +278,13 @@ export default function StockScreener({ stocks, onSelectTicker, onAddToWatchlist
                     onClick={() => handleTickerClick(s.ticker)}
                   >
                     <td className="px-2 py-2 font-semibold" style={{ color: '#378ADD' }}>{s.ticker}</td>
-                    <td className="px-2 py-2 max-w-[160px] truncate" style={{ color: 'var(--text-secondary)' }}>{s.name}</td>
+                    <td className="px-2 py-2 max-w-[140px] truncate" style={{ color: 'var(--text-secondary)' }}>{s.name}</td>
                     <td className="px-2 py-2" style={{ color: 'var(--text-secondary)' }}>{s.subsector}</td>
                     <td className="px-2 py-2 font-medium">${formatNum(s.price)}</td>
+                    <td className="px-2 py-2" style={{ color: 'var(--text-secondary)' }}>{s.target_price ? `$${formatNum(s.target_price)}` : '-'}</td>
+                    <td className="px-2 py-2" style={{ color: s.upside_pct > 0 ? '#1D9E75' : s.upside_pct < 0 ? '#E24B4A' : 'var(--text-secondary)' }}>
+                      {s.upside_pct ? `${s.upside_pct > 0 ? '+' : ''}${formatNum(s.upside_pct, 1)}%` : '-'}
+                    </td>
                     <td className="px-2 py-2" style={{ color: 'var(--text-secondary)' }}>{formatMarketCap(s.market_cap)}</td>
                     <td className="px-2 py-2 font-semibold">
                       <Signal color={scoreColor(s.combined_score)} />
@@ -219,25 +294,21 @@ export default function StockScreener({ stocks, onSelectTicker, onAddToWatchlist
                     <td className="px-2 py-2">{formatNum(s.analyst_score, 1)}</td>
                     <td className="px-2 py-2">{formatNum(s.insider_score, 1)}</td>
                     <td className="px-2 py-2">{formatNum(s.pe_ratio, 1)}</td>
-                    <td className="px-2 py-2">{formatNum(s.pb_ratio, 2)}</td>
                     <td className="px-2 py-2">{s.dividend_yield_pct ? `${formatNum(s.dividend_yield_pct, 1)}%` : '-'}</td>
-                    <td className="px-2 py-2" style={{ color: s.upside_pct > 0 ? '#1D9E75' : s.upside_pct < 0 ? '#E24B4A' : 'var(--text-secondary)' }}>
-                      {s.upside_pct ? `${s.upside_pct > 0 ? '+' : ''}${formatNum(s.upside_pct, 1)}%` : '-'}
-                    </td>
                     <td className="px-2 py-2 capitalize" style={{ color: 'var(--text-secondary)' }}>{s.analyst_consensus || '-'}</td>
-                    <td className="px-2 py-2" style={{ color: s.buy_count > 0 ? '#1D9E75' : 'var(--text-secondary)' }}>
-                      {s.buy_count ?? '-'}
-                    </td>
-                    <td className="px-2 py-2" style={{ color: s.sell_count > 0 ? '#E24B4A' : 'var(--text-secondary)' }}>
-                      {s.sell_count ?? '-'}
-                    </td>
-                    <td className="px-2 py-2" style={{ color: (s.insider_net_value ?? 0) > 0 ? '#1D9E75' : (s.insider_net_value ?? 0) < 0 ? '#E24B4A' : 'var(--text-secondary)' }}>
-                      {s.insider_net_value != null ? formatDollar(s.insider_net_value) : '-'}
+                    <td className="px-2 py-2" onClick={e => e.stopPropagation()}>
+                      <button
+                        onClick={() => openAlertModal(s.ticker, s.price)}
+                        className="px-2 py-0.5 rounded text-xs"
+                        style={{ background: 'var(--bg-secondary)', border: '0.5px solid var(--border)', color: 'var(--text-secondary)' }}
+                      >
+                        Set alert
+                      </button>
                     </td>
                   </tr>
                   {expandedTicker === s.ticker && (
                     <tr key={`${s.ticker}-dropdown`}>
-                      <td colSpan={17} style={{ padding: 0, borderBottom: '0.5px solid var(--border)' }}>
+                      <td colSpan={15} style={{ padding: 0, borderBottom: '0.5px solid var(--border)' }}>
                         <StockRowDropdown
                           stock={s}
                           onViewFullDetails={(t) => onSelectTicker?.(t)}
