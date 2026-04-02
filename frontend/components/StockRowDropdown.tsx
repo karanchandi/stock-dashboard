@@ -67,6 +67,8 @@ export default function StockRowDropdown({ stock, onViewFullDetails, onAddToWatc
             <MetricBox label="Div yield" value={s.dividend_yield_pct ? `${fmt(s.dividend_yield_pct, 2)}%` : 'None'} />
             <MetricBox label="EV/EBITDA" value={fmt(s.ev_ebitda, 1)} />
             <MetricBox label="Target price" value={s.target_price ? `$${fmt(s.target_price)}` : '-'} />
+            <MetricBox label="Revenue" value={fmtCompact(s.total_revenue || 0)} />
+            <MetricBox label="Net income" value={fmtCompact(s.net_income || 0)} color={s.net_income > 0 ? '#1D9E75' : s.net_income < 0 ? '#E24B4A' : undefined} />
             <MetricBox
               label="Upside"
               value={s.upside_pct ? `${s.upside_pct > 0 ? '+' : ''}${fmt(s.upside_pct, 1)}%` : '-'}

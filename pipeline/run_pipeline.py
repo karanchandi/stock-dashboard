@@ -132,7 +132,7 @@ def run_pipeline():
             "pe_ratio", "forward_pe", "pb_ratio", "ev_ebitda",
             "dividend_yield", "dividend_yield_pct", "dividend_rate", "payout_ratio",
             "debt_to_equity", "return_on_equity", "revenue_growth", "earnings_growth",
-            "profit_margin", "operating_margin", "free_cashflow", "total_revenue",
+            "profit_margin", "operating_margin", "free_cashflow", "total_revenue", "net_income",
             "avg_volume", "beta",
             "target_price", "target_high", "target_low", "upside_pct",
             "analyst_rating", "analyst_consensus", "num_analysts", "forward_eps",

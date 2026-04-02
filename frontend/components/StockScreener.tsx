@@ -56,6 +56,8 @@ const COLUMN_TOOLTIPS: Record<string, string> = {
   analyst_score: 'Based on upside to target price, consensus rating, earnings growth estimates, and buy recommendation momentum. Range 0-100.',
   insider_score: 'SEC Form 4 insider buying/selling activity over 90 days. Cluster buying and large purchases score higher. Range 0-100.',
   pe_ratio: 'Price-to-Earnings ratio (trailing 12 months). Lower = potentially undervalued.',
+  total_revenue: 'Total annual revenue (trailing 12 months).',
+  net_income: 'Net income attributable to common shareholders (trailing 12 months). Green = profitable, red = loss.',
   dividend_yield_pct: 'Annual dividend as percentage of stock price. Higher = more income.',
 };
 
@@ -204,7 +206,8 @@ export default function StockScreener({ stocks, onSelectTicker, onAddToWatchlist
       'Upside %': s.upside_pct, 'Consensus': s.analyst_consensus,
       'Overall Rating': s.combined_score, 'Value Score': s.value_score,
       'Analyst Score': s.analyst_score, 'Insider Score': s.insider_score,
-      'P/E': s.pe_ratio, 'Div Yield %': s.dividend_yield_pct,
+      'P/E': s.pe_ratio, 'Revenue': s.total_revenue, 'Net Income': s.net_income,
+      'Div Yield %': s.dividend_yield_pct,
     }));
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
@@ -327,7 +330,7 @@ export default function StockScreener({ stocks, onSelectTicker, onAddToWatchlist
       {/* Table */}
       <div className="rounded-lg overflow-hidden" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
         <div className="overflow-x-auto">
-          <table className="w-full text-xs" style={{ minWidth: 1100 }}>
+          <table className="w-full text-xs" style={{ minWidth: 1300 }}>
             <thead>
               <tr style={{ background: 'var(--bg-secondary)' }}>
                 <th className="px-2 py-2.5 text-center text-xs font-medium" style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border)', width: 30 }}>
@@ -346,6 +349,8 @@ export default function StockScreener({ stocks, onSelectTicker, onAddToWatchlist
                 <SortHeader label="Analyst" field="analyst_score" />
                 <SortHeader label="Insider" field="insider_score" />
                 <SortHeader label="P/E" field="pe_ratio" />
+                <SortHeader label="Revenue" field="total_revenue" />
+                <SortHeader label="Net Income" field="net_income" />
                 <SortHeader label="Div Yield" field="dividend_yield_pct" />
                 <th className="px-2 py-2.5 text-center text-xs font-medium" style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border)' }}>Actions</th>
               </tr>
@@ -389,6 +394,8 @@ export default function StockScreener({ stocks, onSelectTicker, onAddToWatchlist
                       <td className="px-2 py-2">{fmt(s.analyst_score, 1)}</td>
                       <td className="px-2 py-2">{fmt(s.insider_score, 1)}</td>
                       <td className="px-2 py-2">{fmt(s.pe_ratio, 1)}</td>
+                      <td className="px-2 py-2">{formatMarketCap(s.total_revenue)}</td>
+                      <td className="px-2 py-2" style={{ color: s.net_income > 0 ? 'var(--green)' : s.net_income < 0 ? 'var(--red)' : 'var(--text-primary)' }}>{formatMarketCap(s.net_income)}</td>
                       <td className="px-2 py-2">{s.dividend_yield_pct ? `${fmt(s.dividend_yield_pct, 1)}%` : '-'}</td>
                       <td className="px-2 py-2 text-center" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-center gap-1">
@@ -399,7 +406,7 @@ export default function StockScreener({ stocks, onSelectTicker, onAddToWatchlist
                     </tr>
                     {expandedTicker === s.ticker && (
                       <tr key={`${s.ticker}-dropdown`}>
-                        <td colSpan={16} style={{ padding: 0, borderBottom: '0.5px solid var(--border)' }}>
+                        <td colSpan={18} style={{ padding: 0, borderBottom: '0.5px solid var(--border)' }}>
                           <StockRowDropdown stock={s} onViewFullDetails={(t) => onSelectTicker?.(t)} onAddToWatchlist={(t) => onAddToWatchlist?.(t)} />
                         </td>
                       </tr>

@@ -141,6 +141,7 @@ def fetch_all_data(ticker_info):
             "operating_margin": safe_float(info.get("operatingMargins")),
             "free_cashflow": safe_float(info.get("freeCashflow")),
             "total_revenue": safe_float(info.get("totalRevenue")),
+            "net_income": safe_float(info.get("netIncomeToCommon")),
             "52w_high": high_52,
             "52w_low": low_52,
             "pct_from_52w_high": pct_from_52w_high,

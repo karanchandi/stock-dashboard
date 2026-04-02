@@ -138,7 +138,7 @@ export default function Home() {
                     Updated {new Date(lastRun + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </p>
                   <button
-                    onClick={triggerPipeline}
+                    onClick={(e) => { e.stopPropagation(); triggerPipeline(); }}
                     disabled={refreshing}
                     className="text-xs px-2 py-0.5 rounded font-medium"
                     style={{ background: 'var(--brand-light)', color: 'var(--brand)', border: '1px solid var(--brand)', opacity: refreshing ? 0.5 : 1 }}
@@ -149,38 +149,24 @@ export default function Home() {
               )}
             </div>
           </div>
-          {!selectedTicker && (
-            <nav className="flex gap-0.5 p-1 rounded-lg" style={{ background: 'var(--bg-secondary)' }}>
-              {tabs.map(tab => (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  className="px-4 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-1.5"
-                  style={{
-                    background: activeTab === tab.key ? 'var(--bg-primary)' : 'transparent',
-                    color: activeTab === tab.key ? 'var(--brand)' : 'var(--text-secondary)',
-                    boxShadow: activeTab === tab.key ? 'var(--card-shadow)' : 'none',
-                    fontWeight: activeTab === tab.key ? 600 : 500,
-                  }}
-                >
-                  <span style={{ fontSize: 11, opacity: activeTab === tab.key ? 1 : 0.5 }}>{tab.icon}</span>
+          <nav className="flex gap-0.5 p-1 rounded-lg" style={{ background: 'var(--bg-secondary)' }}>
+            {tabs.map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => { setSelectedTicker(null); setActiveTab(tab.key); }}
+                className="px-4 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-1.5"
+                style={{
+                  background: activeTab === tab.key && !selectedTicker ? 'var(--bg-primary)' : 'transparent',
+                  color: activeTab === tab.key && !selectedTicker ? 'var(--brand)' : 'var(--text-secondary)',
+                  boxShadow: activeTab === tab.key && !selectedTicker ? 'var(--card-shadow)' : 'none',
+                  fontWeight: activeTab === tab.key && !selectedTicker ? 600 : 500,
+                }}
+              >
+                  <span style={{ fontSize: 11, opacity: activeTab === tab.key && !selectedTicker ? 1 : 0.5 }}>{tab.icon}</span>
                   {tab.label}
                 </button>
               ))}
             </nav>
-          )}
-          {selectedTicker && (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleBack}
-                className="px-3 py-1.5 rounded-md text-sm font-medium"
-                style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
-              >
-                ← Back
-              </button>
-              <span className="text-sm font-semibold" style={{ color: 'var(--brand)' }}>{selectedTicker}</span>
-            </div>
-          )}
         </div>
       </header>
 

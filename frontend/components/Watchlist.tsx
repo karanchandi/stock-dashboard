@@ -316,9 +316,20 @@ export default function Watchlist({ onSelectTicker, latestPrices, stocks = [] }:
                       <div className="text-sm font-semibold mt-0.5">{stockData.dividend_yield_pct ? `${stockData.dividend_yield_pct.toFixed(2)}%` : 'None'}</div>
                     </div>
                     <div className="rounded-lg p-3" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
+                      <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Revenue</div>
+                      <div className="text-sm font-semibold mt-0.5">{stockData.total_revenue ? (stockData.total_revenue >= 1e12 ? `$${(stockData.total_revenue/1e12).toFixed(1)}T` : stockData.total_revenue >= 1e9 ? `$${(stockData.total_revenue/1e9).toFixed(1)}B` : `$${(stockData.total_revenue/1e6).toFixed(0)}M`) : '-'}</div>
+                    </div>
+                    <div className="rounded-lg p-3" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
+                      <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Net Income</div>
+                      <div className="text-sm font-semibold mt-0.5" style={{ color: stockData.net_income > 0 ? '#1D9E75' : stockData.net_income < 0 ? '#E24B4A' : 'var(--text-primary)' }}>{stockData.net_income ? (Math.abs(stockData.net_income) >= 1e9 ? `$${(stockData.net_income/1e9).toFixed(1)}B` : `$${(stockData.net_income/1e6).toFixed(0)}M`) : '-'}</div>
+                    </div>
+                    <div className="rounded-lg p-3" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
                       <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Consensus</div>
                       <div className="text-sm font-semibold mt-0.5 capitalize">{stockData.analyst_consensus || '-'}</div>
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-3">
                     <div className="rounded-lg p-3" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
                       <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Next Earnings</div>
                       <div className="text-sm font-semibold mt-0.5">{stockData.next_earnings_date ? new Date(stockData.next_earnings_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '-'}</div>
@@ -326,6 +337,14 @@ export default function Watchlist({ onSelectTicker, latestPrices, stocks = [] }:
                     <div className="rounded-lg p-3" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
                       <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>EV/EBITDA</div>
                       <div className="text-sm font-semibold mt-0.5">{stockData.ev_ebitda?.toFixed(1) ?? '-'}</div>
+                    </div>
+                    <div className="rounded-lg p-3" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
+                      <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>P/E Ratio</div>
+                      <div className="text-sm font-semibold mt-0.5">{stockData.pe_ratio?.toFixed(1) ?? '-'}</div>
+                    </div>
+                    <div className="rounded-lg p-3" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
+                      <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Profit Margin</div>
+                      <div className="text-sm font-semibold mt-0.5">{stockData.profit_margin ? `${(stockData.profit_margin * 100).toFixed(1)}%` : '-'}</div>
                     </div>
                   </div>
 

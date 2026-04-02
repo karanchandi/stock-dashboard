@@ -217,9 +217,15 @@ export default function StockDetail({ ticker, onBack, onAddToWatchlist }: StockD
         <div className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: 'var(--text-secondary)' }}>Financials</div>
         <div className="grid grid-cols-4 gap-3">
           <Card label="Market cap"><div className="text-lg font-semibold">{fmtMcap(s.market_cap)}</div></Card>
+          <Card label="Annual revenue"><div className="text-lg font-semibold">{fmtMcap(s.total_revenue)}</div></Card>
+          <Card label="Net income"><div className="text-lg font-semibold" style={{ color: s.net_income > 0 ? '#1D9E75' : s.net_income < 0 ? '#E24B4A' : 'var(--text-primary)' }}>{fmtMcap(s.net_income)}</div></Card>
+          <Card label="Profit margin"><div className="text-lg font-semibold">{s.profit_margin ? `${(s.profit_margin * 100).toFixed(1)}%` : '-'}</div></Card>
+        </div>
+        <div className="grid grid-cols-4 gap-3 mt-3">
           <Card label="Revenue growth"><div className="text-lg font-semibold" style={{ color: s.revenue_growth > 0 ? '#1D9E75' : s.revenue_growth < 0 ? '#E24B4A' : 'var(--text-primary)' }}>{fmtGrowth(s.revenue_growth)}</div></Card>
           <Card label="Earnings growth"><div className="text-lg font-semibold" style={{ color: s.earnings_growth > 0 ? '#1D9E75' : s.earnings_growth < 0 ? '#E24B4A' : 'var(--text-primary)' }}>{fmtGrowth(s.earnings_growth)}</div></Card>
-          <Card label="Profit margin"><div className="text-lg font-semibold">{s.profit_margin ? `${(s.profit_margin * 100).toFixed(1)}%` : '-'}</div></Card>
+          <Card label="Free cash flow"><div className="text-lg font-semibold">{fmtMcap(s.free_cashflow)}</div></Card>
+          <Card label="Operating margin"><div className="text-lg font-semibold">{s.operating_margin ? `${(s.operating_margin * 100).toFixed(1)}%` : '-'}</div></Card>
         </div>
       </div>
 
