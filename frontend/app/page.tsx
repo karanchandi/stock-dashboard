@@ -26,6 +26,7 @@ export default function Home() {
   const [stocks, setStocks] = useState<any[]>([]);
   const [lastRun, setLastRun] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -94,6 +95,22 @@ export default function Home() {
     }
   }
 
+  async function triggerPipeline() {
+    setRefreshing(true);
+    try {
+      const res = await fetch('/api/trigger', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        alert('Pipeline triggered! Data will refresh in ~15-20 minutes.');
+      } else {
+        alert(`Failed to trigger: ${data.error || 'Unknown error'}. You can still trigger manually from GitHub Actions.`);
+      }
+    } catch {
+      alert('Failed to trigger pipeline. You can still trigger manually from GitHub Actions.');
+    }
+    setRefreshing(false);
+  }
+
   const tabs: { key: Tab; label: string; icon: string }[] = [
     { key: 'macro', label: 'Macro', icon: '◉' },
     { key: 'screener', label: 'Value Scanner', icon: '⊞' },
@@ -116,9 +133,19 @@ export default function Home() {
                 Market<span style={{ color: 'var(--brand)' }}>Pulse</span>
               </h1>
               {lastRun && (
-                <p className="text-xs" style={{ color: 'var(--text-tertiary)', marginTop: -1 }}>
-                  Updated {new Date(lastRun + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                </p>
+                <div className="flex items-center gap-2" style={{ marginTop: -1 }}>
+                  <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                    Updated {new Date(lastRun + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </p>
+                  <button
+                    onClick={triggerPipeline}
+                    disabled={refreshing}
+                    className="text-xs px-2 py-0.5 rounded font-medium"
+                    style={{ background: 'var(--brand-light)', color: 'var(--brand)', border: '1px solid var(--brand)', opacity: refreshing ? 0.5 : 1 }}
+                  >
+                    {refreshing ? 'Refreshing...' : '↻ Refresh'}
+                  </button>
+                </div>
               )}
             </div>
           </div>

@@ -34,10 +34,31 @@ export default function MarketNews() {
     fetchNews();
   }, []);
 
+  async function refreshNews() {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/news?type=macro&t=' + Date.now());
+      if (res.ok) {
+        const data = await res.json();
+        setArticles(data.articles || []);
+      }
+    } catch {}
+    setLoading(false);
+  }
+
   return (
     <div>
-      <div className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: 'var(--text-secondary)' }}>
-        Market news
+      <div className="flex items-center justify-between mb-2">
+        <div className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>
+          Market news
+        </div>
+        <button
+          onClick={refreshNews}
+          className="text-xs px-2 py-0.5 rounded font-medium"
+          style={{ background: 'var(--brand-light)', color: 'var(--brand)' }}
+        >
+          ↻ Refresh
+        </button>
       </div>
       <div className="rounded-lg" style={{ background: 'var(--bg-primary)', border: '0.5px solid var(--border)' }}>
         {loading ? (
