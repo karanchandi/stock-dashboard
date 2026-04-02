@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, Fragment } from 'react';
 import StockRowDropdown from './StockRowDropdown';
 import { supabase } from '@/lib/supabase';
 import * as XLSX from 'xlsx';
@@ -354,9 +354,8 @@ export default function StockScreener({ stocks, onSelectTicker, onAddToWatchlist
               {filtered.map((s, i) => {
                 const isSelected = selectedTickers.has(s.ticker);
                 return (
-                  <>
+                  <Fragment key={s.ticker + i}>
                     <tr
-                      key={s.ticker + i}
                       className="transition-all cursor-pointer hover:opacity-80"
                       style={{
                         borderBottom: expandedTicker === s.ticker ? 'none' : '0.5px solid var(--border)',
@@ -405,7 +404,7 @@ export default function StockScreener({ stocks, onSelectTicker, onAddToWatchlist
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 );
               })}
             </tbody>

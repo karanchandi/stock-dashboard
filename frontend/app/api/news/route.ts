@@ -93,8 +93,12 @@ function parseRssItems(xml: string, limit: number): any[] {
 }
 
 function extractTag(xml: string, tag: string): string {
-  const match = xml.match(new RegExp(`<${tag}[^>]*>(?:<!\\[CDATA\\[)?(.*?)(?:\\]\\]>)?</${tag}>`, 's'));
-  return match ? match[1].trim() : '';
+  // Try CDATA first
+  const cdataMatch = xml.match(new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]></${tag}>`));
+  if (cdataMatch) return cdataMatch[1].trim();
+  // Plain tag
+  const plainMatch = xml.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`));
+  return plainMatch ? plainMatch[1].trim() : '';
 }
 
 function extractDomain(url: string): string {

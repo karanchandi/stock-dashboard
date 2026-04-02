@@ -60,7 +60,7 @@ export default function StockRowDropdown({ stock, onViewFullDetails, onAddToWatc
             Key metrics
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <MetricBox label="Combined" value={fmt(s.combined_score, 1)} color={s.combined_score >= 65 ? '#1D9E75' : s.combined_score >= 40 ? '#EF9F27' : '#E24B4A'} />
+            <MetricBox label="Overall" value={fmt(s.combined_score, 1)} color={s.combined_score >= 65 ? '#1D9E75' : s.combined_score >= 40 ? '#EF9F27' : '#E24B4A'} />
             <MetricBox label="Mkt cap" value={fmtMcap(s.market_cap)} />
             <MetricBox label="P/E" value={fmt(s.pe_ratio, 1)} />
             <MetricBox label="P/B" value={fmt(s.pb_ratio, 2)} />

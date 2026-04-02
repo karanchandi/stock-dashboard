@@ -23,7 +23,7 @@ export default function MarketNews() {
     async function fetchNews() {
       setLoading(true);
       try {
-        const res = await fetch('/api/news?type=macro');
+        const res = await fetch('/api/news?type=macro&t=' + Date.now());
         if (res.ok) {
           const data = await res.json();
           setArticles(data.articles || []);
