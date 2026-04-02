@@ -136,11 +136,29 @@ export default function StockScreener({ stocks, onSelectTicker, onAddToWatchlist
     setAlertModal(null);
   }
 
+  const COLUMN_TOOLTIPS: Record<string, string> = {
+    ticker: 'Stock ticker symbol',
+    name: 'Company name',
+    subsector: 'Industry subsector classification',
+    price: 'Current stock price (last close)',
+    target_price: 'Average analyst 12-month price target',
+    upside_pct: 'Percentage upside from current price to analyst target',
+    market_cap: 'Total market capitalization',
+    combined_score: 'Weighted blend of Value (50%), Analyst (30%), and Insider (20%) scores. Range 0-100.',
+    value_score: 'Composite of P/E, P/B, EV/EBITDA, dividend yield, debt/equity, and 52-week position. Lower valuations score higher. Range 0-100.',
+    analyst_score: 'Based on upside to target price, consensus rating, earnings growth estimates, and buy recommendation momentum. Range 0-100.',
+    insider_score: 'SEC Form 4 insider buying/selling activity. Cluster buying and large purchases score higher. Range 0-100.',
+    pe_ratio: 'Price-to-Earnings ratio (trailing 12 months). Lower = potentially cheaper.',
+    dividend_yield_pct: 'Annual dividend yield as percentage of stock price',
+    analyst_consensus: 'Wall Street analyst consensus: strong buy, buy, hold, sell',
+  };
+
   const SortHeader = ({ label, field }: { label: string; field: SortKey }) => (
     <th
       className="px-2 py-2 text-left text-xs font-medium cursor-pointer select-none whitespace-nowrap"
       style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border)' }}
       onClick={() => handleSort(field)}
+      title={COLUMN_TOOLTIPS[field] || ''}
     >
       {label} {sortKey === field ? (sortAsc ? '↑' : '↓') : ''}
     </th>

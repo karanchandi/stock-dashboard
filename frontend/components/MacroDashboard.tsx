@@ -5,50 +5,20 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import MacroDrilldown from './MacroDrilldown';
 
 interface MacroData {
-  vix: number;
-  vix_signal: string;
-  fear_greed_index: number;
-  fear_greed_label: string;
-  yield_3m: number;
-  yield_2y: number;
-  yield_5y: number;
-  yield_10y: number;
-  yield_30y: number;
-  spread_2s10s: number;
-  yield_curve_signal: string;
-  fed_funds_rate: string;
-  oil_wti: number;
-  oil_signal: string;
-  gold: number;
-  gold_signal: string;
-  dxy: number;
-  dxy_signal: string;
-  sp500: number;
-  sp500_signal: string;
-  mortgage_30y: number;
-  mortgage_15y: number;
-  mortgage_signal: string;
-  market_regime: string;
+  [key: string]: any;
 }
 
-function Signal({ color }: { color: 'green' | 'yellow' | 'red' }) {
-  const colors = { green: '#1D9E75', yellow: '#EF9F27', red: '#E24B4A' };
-  return (
-    <span
-      style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: colors[color], marginRight: 6 }}
-    />
-  );
+function Signal({ color }: { color: string }) {
+  const colors: Record<string, string> = { green: '#1D9E75', yellow: '#EF9F27', red: '#E24B4A', gray: '#9ca3af', unknown: '#9ca3af' };
+  return <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: colors[color] || colors.gray, marginRight: 6 }} />;
 }
 
-function SignalBadge({ color, text }: { color: 'green' | 'yellow' | 'red'; text: string }) {
-  const styles = {
-    green: { background: '#E1F5EE', color: '#0F6E56' },
-    yellow: { background: '#FAEEDA', color: '#854F0B' },
-    red: { background: '#FCEBEB', color: '#A32D2D' },
-  };
+function DailyChange({ change, pct }: { change: number | null; pct: number | null }) {
+  if (change == null || pct == null) return null;
+  const isUp = change >= 0;
   return (
-    <span className="text-xs font-medium px-2 py-0.5 rounded-md" style={styles[color]}>
-      {text}
+    <span className="text-xs font-medium ml-1" style={{ color: isUp ? '#1D9E75' : '#E24B4A' }}>
+      {isUp ? '▲' : '▼'} {Math.abs(pct).toFixed(2)}%
     </span>
   );
 }
@@ -66,40 +36,14 @@ function Card({ label, children, onClick }: { label: string; children: React.Rea
   );
 }
 
-function getVixSignal(v: number): 'green' | 'yellow' | 'red' {
-  if (v >= 25) return 'red';
-  if (v >= 18) return 'yellow';
-  return 'green';
-}
-
-function getOilSignal(v: number): 'green' | 'yellow' | 'red' {
-  if (v >= 100) return 'red';
-  if (v >= 80) return 'yellow';
-  return 'green';
-}
-
-function getGoldSignal(v: number): 'green' | 'yellow' | 'red' {
-  if (v >= 3000) return 'green';
-  if (v >= 2000) return 'yellow';
-  return 'red';
-}
-
-function getDxySignal(v: number): 'green' | 'yellow' | 'red' {
-  if (v >= 105) return 'red';
-  if (v >= 100) return 'yellow';
-  return 'green';
-}
-
-function getMortgageSignal(v: number): 'green' | 'yellow' | 'red' {
-  if (v >= 7) return 'red';
-  if (v >= 6.5) return 'yellow';
-  return 'green';
-}
-
-function getFearGreedSignal(v: number): 'green' | 'yellow' | 'red' {
-  if (v <= 25) return 'red';
-  if (v <= 50) return 'yellow';
-  return 'green';
+function SignalBadge({ color, text }: { color: string; text: string }) {
+  const styles: Record<string, { background: string; color: string }> = {
+    green: { background: '#E1F5EE', color: '#0F6E56' },
+    yellow: { background: '#FAEEDA', color: '#854F0B' },
+    red: { background: '#FCEBEB', color: '#A32D2D' },
+  };
+  const s = styles[color] || styles.yellow;
+  return <span className="text-xs font-medium px-2 py-0.5 rounded-md" style={s}>{text}</span>;
 }
 
 function getRegimeLabel(regime: string): string {
@@ -108,19 +52,29 @@ function getRegimeLabel(regime: string): string {
   return 'Risk-on';
 }
 
-function getFearGreedLabel(label: string): string {
-  return label?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || '';
+function getRegimeColor(regime: string): string {
+  if (regime === 'risk_off') return 'red';
+  if (regime === 'cautious') return 'yellow';
+  return 'green';
+}
+
+function getSignalNote(indicator: string, data: MacroData): string {
+  switch (indicator) {
+    case 'vix': return data.vix >= 25 ? 'Elevated volatility' : data.vix >= 15 ? 'Above average' : 'Low volatility';
+    case 'oil': return data.oil_wti >= 90 ? 'Above $90 — inflation risk' : data.oil_wti >= 70 ? 'Elevated' : 'Normal range';
+    case 'gold': return data.gold_ma_pct > 3 ? 'Flight to safety active' : data.gold_ma_pct < -3 ? 'Risk appetite returning' : 'Normal range';
+    case 'dxy': return data.dxy >= 105 ? 'Strong — headwind' : data.dxy >= 100 ? 'Moderately strong' : 'Neutral';
+    case 'mortgage': return data.mortgage_30y >= 7 ? 'Restrictive' : data.mortgage_30y >= 6 ? 'Elevated' : 'Favorable';
+    case 'fear_greed': return data.fear_greed_label?.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) || '';
+    default: return '';
+  }
 }
 
 export default function MacroDashboard({ data }: { data: MacroData | null }) {
   const [drilldown, setDrilldown] = useState<{ indicator: string; label: string } | null>(null);
 
   if (!data) {
-    return (
-      <div className="text-center py-20 text-sm" style={{ color: 'var(--text-secondary)' }}>
-        No macro data available yet. Run the pipeline first.
-      </div>
-    );
+    return <div className="text-center py-20 text-sm" style={{ color: 'var(--text-secondary)' }}>No macro data available yet. Run the pipeline first.</div>;
   }
 
   if (drilldown) {
@@ -135,39 +89,26 @@ export default function MacroDashboard({ data }: { data: MacroData | null }) {
     { maturity: '30Y', yield: data.yield_30y },
   ].filter(d => d.yield != null);
 
-  const regimeColor = data.market_regime === 'risk_off' ? 'red' : data.market_regime === 'cautious' ? 'yellow' : 'green';
+  const regimeColor = getRegimeColor(data.market_regime);
+  const regimeColors: Record<string, string> = { red: '#E24B4A', yellow: '#EF9F27', green: '#1D9E75' };
 
-  const signals: { name: string; value: string; color: 'green' | 'yellow' | 'red'; note: string }[] = [
-    { name: 'Fear & greed', value: `${data.fear_greed_index}/100`, color: getFearGreedSignal(data.fear_greed_index), note: getFearGreedLabel(data.fear_greed_label) },
-    { name: 'VIX', value: data.vix?.toFixed(1), color: getVixSignal(data.vix), note: data.vix >= 25 ? 'Elevated volatility' : data.vix >= 18 ? 'Above average' : 'Low volatility' },
-    { name: 'Yield curve (2s/10s)', value: `${data.spread_2s10s > 0 ? '+' : ''}${data.spread_2s10s?.toFixed(0)} bps`, color: data.spread_2s10s < 0 ? 'red' : data.spread_2s10s < 50 ? 'yellow' : 'green', note: data.spread_2s10s < 0 ? 'Inverted — recession warning' : 'Normalized — watch for lag' },
-    { name: 'Oil (WTI)', value: `$${data.oil_wti?.toFixed(2)}`, color: getOilSignal(data.oil_wti), note: data.oil_wti >= 100 ? 'Above $100 — inflation risk' : 'Normal range' },
-    { name: 'Gold', value: `$${data.gold?.toLocaleString()}`, color: getGoldSignal(data.gold), note: data.gold >= 3000 ? 'Flight to safety active' : 'Normal' },
-    { name: 'DXY (dollar)', value: data.dxy?.toFixed(2), color: getDxySignal(data.dxy), note: data.dxy >= 100 ? 'Strong — headwind for intl stocks' : 'Neutral' },
-    { name: '30-yr mortgage', value: `${data.mortgage_30y?.toFixed(2)}%`, color: getMortgageSignal(data.mortgage_30y), note: data.mortgage_30y >= 6.5 ? 'Rising — watch cap rates' : 'Moderate' },
-    { name: 'S&P 500', value: data.sp500?.toLocaleString(), color: data.sp500 >= 6800 ? 'green' : data.sp500 >= 6400 ? 'yellow' : 'red', note: data.sp500 < 6400 ? 'Near correction territory' : 'Holding support' },
-  ];
+  // Sector performance sorted by change
+  const sectors = data.sector_performance || {};
+  const sortedSectors = Object.entries(sectors).sort(([, a]: any, [, b]: any) => b - a);
 
   return (
     <div className="space-y-6">
       {/* Regime banner */}
-      <div
-        className="rounded-lg p-4"
-        style={{
-          background: 'var(--bg-primary)',
-          border: '0.5px solid var(--border)',
-          borderLeft: `3px solid ${regimeColor === 'red' ? '#E24B4A' : regimeColor === 'yellow' ? '#EF9F27' : '#1D9E75'}`,
-        }}
-      >
+      <div className="rounded-lg p-4" style={{ background: 'var(--bg-primary)', border: '0.5px solid var(--border)', borderLeft: `3px solid ${regimeColors[regimeColor]}` }}>
         <div className="flex items-center gap-2 mb-1">
-          <Signal color={regimeColor as 'green' | 'yellow' | 'red'} />
+          <Signal color={regimeColor} />
           <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
             Market regime: {getRegimeLabel(data.market_regime)}
           </span>
         </div>
         <p className="text-xs" style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>
           {data.market_regime === 'risk_off'
-            ? 'Elevated volatility and stress signals suggest caution. Historically a contrarian buying zone for value plays with strong balance sheets.'
+            ? 'Multiple stress signals active. Historically a contrarian buying zone for value plays with strong balance sheets.'
             : data.market_regime === 'cautious'
             ? 'Mixed signals — some indicators elevated. Selective positioning recommended.'
             : 'Broad risk appetite. Growth and momentum strategies favored.'}
@@ -177,47 +118,100 @@ export default function MacroDashboard({ data }: { data: MacroData | null }) {
       {/* Sentiment row */}
       <div className="grid grid-cols-2 gap-3">
         <Card label="Fear & greed index" onClick={() => setDrilldown({ indicator: 'fear_greed', label: 'Fear & Greed Index' })}>
-          <div className="text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>
-            <Signal color={getFearGreedSignal(data.fear_greed_index)} />
+          <div className="text-2xl font-semibold">
+            <Signal color={data.fear_greed_signal || 'gray'} />
             {data.fear_greed_index}
           </div>
           <div className="mt-1">
-            <SignalBadge color={getFearGreedSignal(data.fear_greed_index)} text={getFearGreedLabel(data.fear_greed_label)} />
+            <SignalBadge color={data.fear_greed_signal || 'yellow'} text={getSignalNote('fear_greed', data)} />
           </div>
           <div className="mt-3 relative h-3 rounded-full overflow-hidden" style={{ background: 'linear-gradient(to right, #E24B4A, #EF9F27, #1D9E75)' }}>
-            <div
-              className="absolute top-0 w-1 h-full rounded"
-              style={{ left: `${data.fear_greed_index}%`, background: 'var(--text-primary)' }}
-            />
+            <div className="absolute top-0 w-1 h-full rounded" style={{ left: `${data.fear_greed_index}%`, background: 'var(--text-primary)' }} />
           </div>
-          <div className="flex justify-between text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
-            <span>Fear</span><span>Greed</span>
-          </div>
+          <div className="flex justify-between text-xs mt-1" style={{ color: 'var(--text-secondary)' }}><span>Fear</span><span>Greed</span></div>
         </Card>
 
         <Card label="VIX (volatility index)" onClick={() => setDrilldown({ indicator: 'vix', label: 'VIX Volatility Index' })}>
-          <div className="text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>
-            <Signal color={getVixSignal(data.vix)} />
+          <div className="text-2xl font-semibold">
+            <Signal color={data.vix_signal || 'gray'} />
             {data.vix?.toFixed(2)}
+            <DailyChange change={data.vix_daily_change} pct={data.vix_daily_change_pct} />
           </div>
-          <p className="text-xs mt-2" style={{ color: 'var(--text-secondary)' }}>
-            {data.vix >= 30 ? 'Extreme fear — market stress' : data.vix >= 20 ? 'Elevated — uncertainty high' : 'Normal range'}
-          </p>
+          <p className="text-xs mt-2" style={{ color: 'var(--text-secondary)' }}>{getSignalNote('vix', data)}</p>
         </Card>
       </div>
 
+      {/* S&P 500 — triple signal */}
+      <div>
+        <div className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: 'var(--text-secondary)' }}>S&P 500</div>
+        <div className="rounded-lg p-4" style={{ background: 'var(--bg-primary)', border: '0.5px solid var(--border)', cursor: 'pointer' }} onClick={() => setDrilldown({ indicator: 'sp500', label: 'S&P 500' })}>
+          <div className="flex items-baseline gap-3 mb-3">
+            <span className="text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>
+              {data.sp500?.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            </span>
+            <DailyChange change={data.sp500_daily_change} pct={data.sp500_daily_change_pct} />
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-md p-2" style={{ background: 'var(--bg-secondary)' }}>
+              <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Static level</div>
+              <div className="text-sm font-semibold mt-0.5"><Signal color={data.sp500_signal_static || 'gray'} />{data.sp500_signal_static === 'green' ? 'Bullish' : data.sp500_signal_static === 'yellow' ? 'Neutral' : 'Correction'}</div>
+            </div>
+            <div className="rounded-md p-2" style={{ background: 'var(--bg-secondary)' }}>
+              <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>vs 50-day MA</div>
+              <div className="text-sm font-semibold mt-0.5">
+                <Signal color={data.sp500_signal_ma || 'gray'} />
+                {data.sp500_50d_ma ? `${data.sp500 > data.sp500_50d_ma ? '+' : ''}${(((data.sp500 - data.sp500_50d_ma) / data.sp500_50d_ma) * 100).toFixed(1)}%` : '-'}
+              </div>
+            </div>
+            <div className="rounded-md p-2" style={{ background: 'var(--bg-secondary)' }}>
+              <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>YTD performance</div>
+              <div className="text-sm font-semibold mt-0.5">
+                <Signal color={data.sp500_signal_ytd || 'gray'} />
+                {data.sp500_ytd_pct != null ? `${data.sp500_ytd_pct > 0 ? '+' : ''}${data.sp500_ytd_pct.toFixed(1)}%` : '-'}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Sector Performance Heatmap */}
+      {sortedSectors.length > 0 && (
+        <div>
+          <div className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: 'var(--text-secondary)' }}>
+            S&P 500 sector performance (daily)
+          </div>
+          <div className="grid grid-cols-4 gap-2">
+            {sortedSectors.map(([name, change]: [string, any]) => (
+              <div key={name} className="rounded-md px-3 py-2" style={{ background: 'var(--bg-primary)', border: '0.5px solid var(--border)' }}>
+                <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>{name}</div>
+                <div className="text-sm font-semibold mt-0.5" style={{ color: change >= 0 ? '#1D9E75' : '#E24B4A' }}>
+                  {change >= 0 ? '+' : ''}{change.toFixed(2)}%
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Yields */}
       <div>
-        <div className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: 'var(--text-secondary)' }}>
-          Treasury yields & yield curve
-        </div>
-        <div className="grid grid-cols-4 gap-3 mb-3">
-          <Card label="2-year" onClick={() => setDrilldown({ indicator: 'yield_2y', label: '2-Year Treasury Yield' })}>{<div className="text-lg font-semibold">{data.yield_2y?.toFixed(2)}%</div>}</Card>
-          <Card label="10-year" onClick={() => setDrilldown({ indicator: 'yield_10y', label: '10-Year Treasury Yield' })}>{<div className="text-lg font-semibold">{data.yield_10y?.toFixed(2)}%</div>}</Card>
-          <Card label="30-year" onClick={() => setDrilldown({ indicator: 'yield_30y', label: '30-Year Treasury Yield' })}>{<div className="text-lg font-semibold">{data.yield_30y?.toFixed(2)}%</div>}</Card>
+        <div className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: 'var(--text-secondary)' }}>Treasury yields & rates</div>
+        <div className="grid grid-cols-5 gap-3 mb-3">
+          <Card label="Fed funds (proxy)" onClick={() => setDrilldown({ indicator: 'yield_2y', label: 'Fed Funds Rate (3M T-bill proxy)' })}>
+            <div className="text-lg font-semibold"><Signal color={data.fed_funds_signal || 'gray'} />{data.fed_funds_proxy?.toFixed(2)}%</div>
+          </Card>
+          <Card label="2-year" onClick={() => setDrilldown({ indicator: 'yield_2y', label: '2-Year Treasury Yield' })}>
+            <div className="text-lg font-semibold">{data.yield_2y?.toFixed(2)}%</div>
+          </Card>
+          <Card label="10-year" onClick={() => setDrilldown({ indicator: 'yield_10y', label: '10-Year Treasury Yield' })}>
+            <div className="text-lg font-semibold">{data.yield_10y?.toFixed(2)}%</div>
+          </Card>
+          <Card label="30-year" onClick={() => setDrilldown({ indicator: 'yield_30y', label: '30-Year Treasury Yield' })}>
+            <div className="text-lg font-semibold">{data.yield_30y?.toFixed(2)}%</div>
+          </Card>
           <Card label="2s/10s spread" onClick={() => setDrilldown({ indicator: 'spread', label: '2s/10s Yield Spread' })}>
             <div className="text-lg font-semibold">
-              <Signal color={data.spread_2s10s < 0 ? 'red' : data.spread_2s10s < 50 ? 'yellow' : 'green'} />
+              <Signal color={data.yield_curve_signal || 'gray'} />
               {data.spread_2s10s > 0 ? '+' : ''}{data.spread_2s10s?.toFixed(0)} bps
             </div>
           </Card>
@@ -225,19 +219,12 @@ export default function MacroDashboard({ data }: { data: MacroData | null }) {
         {yieldCurve.length > 0 && (
           <div className="rounded-lg p-4" style={{ background: 'var(--bg-primary)', border: '0.5px solid var(--border)' }}>
             <div className="text-xs mb-3" style={{ color: 'var(--text-secondary)' }}>Yield curve</div>
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={180}>
               <LineChart data={yieldCurve}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis dataKey="maturity" tick={{ fontSize: 12, fill: 'var(--text-secondary)' }} />
-                <YAxis
-                  domain={['auto', 'auto']}
-                  tick={{ fontSize: 12, fill: 'var(--text-secondary)' }}
-                  tickFormatter={(v: number) => `${v.toFixed(1)}%`}
-                />
-                <Tooltip
-                  contentStyle={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }}
-                  formatter={(value: any) => [`${Number(value).toFixed(3)}%`, 'Yield']}
-                />
+                <YAxis domain={['auto', 'auto']} tick={{ fontSize: 12, fill: 'var(--text-secondary)' }} tickFormatter={(v: number) => `${v.toFixed(1)}%`} />
+                <Tooltip contentStyle={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} formatter={(value: any) => [`${Number(value).toFixed(3)}%`, 'Yield']} />
                 <Line type="monotone" dataKey="yield" stroke="#378ADD" strokeWidth={2} dot={{ fill: '#378ADD', r: 4 }} />
               </LineChart>
             </ResponsiveContainer>
@@ -247,43 +234,34 @@ export default function MacroDashboard({ data }: { data: MacroData | null }) {
 
       {/* Commodities & rates */}
       <div>
-        <div className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: 'var(--text-secondary)' }}>
-          Commodities & rates
-        </div>
+        <div className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: 'var(--text-secondary)' }}>Commodities & rates</div>
         <div className="grid grid-cols-4 gap-3">
           <Card label="WTI crude oil" onClick={() => setDrilldown({ indicator: 'oil', label: 'WTI Crude Oil' })}>
-            <div className="text-lg font-semibold"><Signal color={getOilSignal(data.oil_wti)} />${data.oil_wti?.toFixed(2)}</div>
+            <div className="text-lg font-semibold">
+              <Signal color={data.oil_signal || 'gray'} />${data.oil_wti?.toFixed(2)}
+              <DailyChange change={data.oil_daily_change} pct={data.oil_daily_change_pct} />
+            </div>
           </Card>
-          <Card label="Gold" onClick={() => setDrilldown({ indicator: 'gold', label: 'Gold (spot)' })}>
-            <div className="text-lg font-semibold"><Signal color={getGoldSignal(data.gold)} />${data.gold?.toLocaleString()}</div>
+          <Card label="Gold (vs 50d MA)" onClick={() => setDrilldown({ indicator: 'gold', label: 'Gold (Spot)' })}>
+            <div className="text-lg font-semibold">
+              <Signal color={data.gold_signal || 'gray'} />${data.gold?.toLocaleString()}
+              <DailyChange change={data.gold_daily_change} pct={data.gold_daily_change_pct} />
+            </div>
+            <div className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+              {data.gold_ma_pct != null ? `${data.gold_ma_pct > 0 ? '+' : ''}${data.gold_ma_pct.toFixed(1)}% from 50d MA` : ''}
+            </div>
           </Card>
           <Card label="DXY (USD index)" onClick={() => setDrilldown({ indicator: 'dxy', label: 'US Dollar Index (DXY)' })}>
-            <div className="text-lg font-semibold"><Signal color={getDxySignal(data.dxy)} />{data.dxy?.toFixed(2)}</div>
+            <div className="text-lg font-semibold">
+              <Signal color={data.dxy_signal || 'gray'} />{data.dxy?.toFixed(2)}
+              <DailyChange change={data.dxy_daily_change} pct={data.dxy_daily_change_pct} />
+            </div>
           </Card>
           <Card label="30-yr mortgage" onClick={() => setDrilldown({ indicator: 'mortgage', label: '30-Year Mortgage Rate' })}>
-            <div className="text-lg font-semibold"><Signal color={getMortgageSignal(data.mortgage_30y)} />{data.mortgage_30y?.toFixed(2)}%</div>
-          </Card>
-        </div>
-      </div>
-
-      {/* Signal summary */}
-      <div>
-        <div className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: 'var(--text-secondary)' }}>
-          Signal summary
-        </div>
-        <div className="space-y-1.5">
-          {signals.map((s) => (
-            <div
-              key={s.name}
-              className="flex items-center gap-2 rounded-lg px-3 py-2"
-              style={{ background: 'var(--bg-primary)', border: '0.5px solid var(--border)' }}
-            >
-              <Signal color={s.color} />
-              <span className="text-xs flex-1" style={{ color: 'var(--text-secondary)' }}>{s.name}</span>
-              <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{s.value}</span>
-              <SignalBadge color={s.color} text={s.note} />
+            <div className="text-lg font-semibold">
+              <Signal color={data.mortgage_signal || 'gray'} />{data.mortgage_30y?.toFixed(2)}%
             </div>
-          ))}
+          </Card>
         </div>
       </div>
     </div>

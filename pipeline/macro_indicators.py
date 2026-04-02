@@ -1,6 +1,7 @@
 """
-Macro Indicators Module
+Macro Indicators Module v2
 Pulls VIX, treasury yields, oil, gold, DXY, S&P500, and derives signals.
+Includes 50-day MA for gold and S&P, YTD performance, sector heatmap.
 Fear/greed approximated from VIX + market momentum.
 """
 import yfinance as yf
@@ -20,14 +21,28 @@ def safe_float(val):
         return None
 
 
-def get_price(ticker):
-    """Get current/latest price for a ticker."""
+def get_price_and_meta(ticker):
+    """Get current price, previous close, and 50-day MA for a ticker."""
     try:
         t = yf.Ticker(ticker)
         info = t.info
-        return safe_float(info.get("regularMarketPrice")) or safe_float(info.get("previousClose"))
+        price = safe_float(info.get("regularMarketPrice")) or safe_float(info.get("previousClose"))
+        prev_close = safe_float(info.get("regularMarketPreviousClose")) or safe_float(info.get("previousClose"))
+        fifty_day_ma = safe_float(info.get("fiftyDayAverage"))
+        two_hundred_day_ma = safe_float(info.get("twoHundredDayAverage"))
+        return {
+            "price": price,
+            "prev_close": prev_close,
+            "fifty_day_ma": fifty_day_ma,
+            "two_hundred_day_ma": two_hundred_day_ma,
+        }
     except Exception:
-        return None
+        return {"price": None, "prev_close": None, "fifty_day_ma": None, "two_hundred_day_ma": None}
+
+
+def get_price(ticker):
+    """Get current/latest price for a ticker."""
+    return get_price_and_meta(ticker)["price"]
 
 
 def get_yield_data():
@@ -48,51 +63,115 @@ def get_yield_data():
     return results
 
 
+def daily_change(price, prev_close):
+    """Calculate daily change and percentage."""
+    if price is None or prev_close is None or prev_close == 0:
+        return None, None
+    change = price - prev_close
+    pct = (change / prev_close) * 100
+    return round(change, 4), round(pct, 2)
+
+
+# =====================================================================
+# SIGNAL CLASSIFIERS (updated thresholds)
+# =====================================================================
+
 def classify_vix(vix):
+    """Green <15, Yellow 15-25, Red >25"""
     if vix is None: return "unknown"
-    if vix >= 30: return "extreme_fear"
-    if vix >= 20: return "elevated"
-    if vix >= 15: return "normal"
-    return "complacent"
+    if vix >= 25: return "red"
+    if vix >= 15: return "yellow"
+    return "green"
 
 
 def classify_oil(price):
+    """Green <70, Yellow 70-90, Red >90"""
     if price is None: return "unknown"
-    if price >= 100: return "crisis"
-    if price >= 85: return "elevated"
-    if price >= 60: return "normal"
-    return "low"
+    if price >= 90: return "red"
+    if price >= 70: return "yellow"
+    return "green"
 
 
-def classify_gold(price):
-    if price is None: return "unknown"
-    if price >= 3000: return "safe_haven_bid"
-    if price >= 2000: return "elevated"
-    return "normal"
+def classify_gold_ma(price, fifty_day_ma):
+    """Gold signal based on distance from 50-day MA.
+    Green: <3% above MA (calm)
+    Yellow: within 3% either way
+    Red: >3% above MA (panic safe-haven buying)
+    """
+    if price is None or fifty_day_ma is None or fifty_day_ma == 0:
+        return "unknown"
+    pct_above = ((price - fifty_day_ma) / fifty_day_ma) * 100
+    if pct_above > 3: return "red"
+    if pct_above < -3: return "green"
+    return "yellow"
 
 
 def classify_dxy(val):
+    """Green <100, Yellow 100-105, Red >105"""
     if val is None: return "unknown"
-    if val >= 105: return "strong_headwind"
-    if val >= 100: return "moderately_strong"
-    if val >= 95: return "neutral"
-    return "weak_tailwind"
+    if val >= 105: return "red"
+    if val >= 100: return "yellow"
+    return "green"
+
+
+def classify_fear_greed(score):
+    """CNN classifications: Red <45 (Fear), Yellow 45-55 (Neutral), Green >55 (Greed)"""
+    if score is None: return "unknown"
+    if score < 45: return "red"
+    if score <= 55: return "yellow"
+    return "green"
 
 
 def classify_yield_curve(spread):
+    """Green >50bps, Yellow 0-50bps, Red <0bps"""
     if spread is None: return "unknown"
-    if spread < 0: return "inverted_recession_warning"
-    if spread < 25: return "flat_caution"
-    if spread < 100: return "normalizing_watch"
-    return "steep_healthy"
+    if spread < 0: return "red"
+    if spread < 50: return "yellow"
+    return "green"
 
 
 def classify_mortgage(rate):
+    """Green <6.0, Yellow 6.0-7.0, Red >7.0"""
     if rate is None: return "unknown"
-    if rate >= 7.0: return "restrictive"
-    if rate >= 6.5: return "elevated"
-    if rate >= 6.0: return "moderate"
-    return "favorable"
+    if rate >= 7.0: return "red"
+    if rate >= 6.0: return "yellow"
+    return "green"
+
+
+def classify_sp500_static(price):
+    """Static: Green >6800, Yellow 6000-6800, Red <6000"""
+    if price is None: return "unknown"
+    if price >= 6800: return "green"
+    if price >= 6000: return "yellow"
+    return "red"
+
+
+def classify_sp500_ma(price, fifty_day_ma):
+    """50-day MA: Green >2% above, Yellow within 2%, Red >2% below"""
+    if price is None or fifty_day_ma is None or fifty_day_ma == 0:
+        return "unknown"
+    pct = ((price - fifty_day_ma) / fifty_day_ma) * 100
+    if pct > 2: return "green"
+    if pct < -2: return "red"
+    return "yellow"
+
+
+def classify_sp500_ytd(price, ytd_start=5881):
+    """YTD: Green >+5%, Yellow -5% to +5%, Red <-5%"""
+    if price is None: return "unknown"
+    ytd_pct = ((price - ytd_start) / ytd_start) * 100
+    if ytd_pct > 5: return "green"
+    if ytd_pct < -5: return "red"
+    return "yellow"
+
+
+def classify_fed_proxy(rate_3m):
+    """Fed funds proxy from 3-month T-bill.
+    Green <3.0 (accommodative), Yellow 3.0-4.5 (neutral), Red >4.5 (restrictive)"""
+    if rate_3m is None: return "unknown"
+    if rate_3m >= 4.5: return "red"
+    if rate_3m >= 3.0: return "yellow"
+    return "green"
 
 
 def estimate_fear_greed(vix, sp500_change_pct=None):
@@ -106,19 +185,41 @@ def estimate_fear_greed(vix, sp500_change_pct=None):
     elif vix >= 14: score = 65
     else: score = 80
 
-    if score <= 25: label = "extreme_fear"
-    elif score <= 45: label = "fear"
+    if score < 45: label = "fear"
     elif score <= 55: label = "neutral"
-    elif score <= 75: label = "greed"
-    else: label = "extreme_greed"
+    else: label = "greed"
     return score, label
 
 
-def classify_sp500(price):
-    if price is None: return "unknown"
-    if price >= 6800: return "bullish"
-    if price >= 6400: return "cautious"
-    return "correction"
+def get_sector_performance():
+    """Get S&P 500 sector ETF performance."""
+    sectors = {
+        "XLE": "Energy",
+        "XLF": "Financials",
+        "XLK": "Technology",
+        "XLV": "Healthcare",
+        "XLI": "Industrials",
+        "XLP": "Consumer Staples",
+        "XLY": "Consumer Discretionary",
+        "XLU": "Utilities",
+        "XLRE": "Real Estate",
+        "XLB": "Materials",
+        "XLC": "Communication Svcs",
+    }
+    results = {}
+    for ticker, name in sectors.items():
+        try:
+            t = yf.Ticker(ticker)
+            info = t.info
+            price = safe_float(info.get("regularMarketPrice"))
+            prev = safe_float(info.get("regularMarketPreviousClose")) or safe_float(info.get("previousClose"))
+            if price and prev and prev > 0:
+                change_pct = round(((price - prev) / prev) * 100, 2)
+                results[name] = change_pct
+            time.sleep(0.5)
+        except Exception:
+            pass
+    return results
 
 
 def fetch_macro_data():
@@ -126,11 +227,18 @@ def fetch_macro_data():
     print("Fetching macro indicators...")
     data = {}
 
+    # --- VIX ---
     print("  VIX...")
-    data["vix"] = get_price("^VIX")
+    vix_meta = get_price_and_meta("^VIX")
+    data["vix"] = vix_meta["price"]
+    data["vix_prev_close"] = vix_meta["prev_close"]
+    vix_chg, vix_pct = daily_change(data["vix"], vix_meta["prev_close"])
+    data["vix_daily_change"] = vix_chg
+    data["vix_daily_change_pct"] = vix_pct
     data["vix_signal"] = classify_vix(data["vix"])
     time.sleep(1.0)
 
+    # --- Treasury yields ---
     print("  Treasury yields...")
     yields = get_yield_data()
     data.update(yields)
@@ -140,48 +248,111 @@ def fetch_macro_data():
     data["yield_curve_signal"] = classify_yield_curve(data["spread_2s10s"])
     time.sleep(1.0)
 
+    # --- Fed Funds proxy ---
+    y3m = yields.get("yield_3m")
+    data["fed_funds_proxy"] = y3m
+    data["fed_funds_signal"] = classify_fed_proxy(y3m)
+
+    # --- Oil ---
     print("  Oil (WTI)...")
-    data["oil_wti"] = get_price("CL=F")
+    oil_meta = get_price_and_meta("CL=F")
+    data["oil_wti"] = oil_meta["price"]
+    data["oil_prev_close"] = oil_meta["prev_close"]
+    oil_chg, oil_pct = daily_change(data["oil_wti"], oil_meta["prev_close"])
+    data["oil_daily_change"] = oil_chg
+    data["oil_daily_change_pct"] = oil_pct
     data["oil_signal"] = classify_oil(data["oil_wti"])
     time.sleep(1.0)
 
+    # --- Gold (with 50-day MA) ---
     print("  Gold...")
-    data["gold"] = get_price("GC=F")
-    data["gold_signal"] = classify_gold(data["gold"])
+    gold_meta = get_price_and_meta("GC=F")
+    data["gold"] = gold_meta["price"]
+    data["gold_prev_close"] = gold_meta["prev_close"]
+    data["gold_50d_ma"] = gold_meta["fifty_day_ma"]
+    gold_chg, gold_pct = daily_change(data["gold"], gold_meta["prev_close"])
+    data["gold_daily_change"] = gold_chg
+    data["gold_daily_change_pct"] = gold_pct
+    # Gold signal: distance from 50-day MA
+    if data["gold"] and data["gold_50d_ma"] and data["gold_50d_ma"] > 0:
+        data["gold_ma_pct"] = round(((data["gold"] - data["gold_50d_ma"]) / data["gold_50d_ma"]) * 100, 2)
+    else:
+        data["gold_ma_pct"] = None
+    data["gold_signal"] = classify_gold_ma(data["gold"], data["gold_50d_ma"])
     time.sleep(1.0)
 
+    # --- DXY ---
     print("  DXY...")
-    data["dxy"] = get_price("DX-Y.NYB")
+    dxy_meta = get_price_and_meta("DX-Y.NYB")
+    data["dxy"] = dxy_meta["price"]
+    data["dxy_prev_close"] = dxy_meta["prev_close"]
+    dxy_chg, dxy_pct = daily_change(data["dxy"], dxy_meta["prev_close"])
+    data["dxy_daily_change"] = dxy_chg
+    data["dxy_daily_change_pct"] = dxy_pct
     data["dxy_signal"] = classify_dxy(data["dxy"])
     time.sleep(1.0)
 
+    # --- S&P 500 (triple signal) ---
     print("  S&P 500...")
-    data["sp500"] = get_price("^GSPC")
-    data["sp500_signal"] = classify_sp500(data["sp500"])
+    sp_meta = get_price_and_meta("^GSPC")
+    data["sp500"] = sp_meta["price"]
+    data["sp500_prev_close"] = sp_meta["prev_close"]
+    data["sp500_50d_ma"] = sp_meta["fifty_day_ma"]
+    sp_chg, sp_pct = daily_change(data["sp500"], sp_meta["prev_close"])
+    data["sp500_daily_change"] = sp_chg
+    data["sp500_daily_change_pct"] = sp_pct
+
+    data["sp500_signal_static"] = classify_sp500_static(data["sp500"])
+    data["sp500_signal_ma"] = classify_sp500_ma(data["sp500"], sp_meta["fifty_day_ma"])
+    # YTD: S&P opened 2026 around 5881
+    sp500_ytd_start = 5881
+    if data["sp500"]:
+        data["sp500_ytd_pct"] = round(((data["sp500"] - sp500_ytd_start) / sp500_ytd_start) * 100, 2)
+    else:
+        data["sp500_ytd_pct"] = None
+    data["sp500_signal_ytd"] = classify_sp500_ytd(data["sp500"], sp500_ytd_start)
+    # Overall S&P signal: worst of the three
+    sp_signals = [data["sp500_signal_static"], data["sp500_signal_ma"], data["sp500_signal_ytd"]]
+    if "red" in sp_signals:
+        data["sp500_signal"] = "red"
+    elif "yellow" in sp_signals:
+        data["sp500_signal"] = "yellow"
+    else:
+        data["sp500_signal"] = "green"
     time.sleep(1.0)
 
-    # Fear/greed estimate
+    # --- Fear/greed estimate ---
     fg_score, fg_label = estimate_fear_greed(data["vix"])
     data["fear_greed_index"] = fg_score
     data["fear_greed_label"] = fg_label
+    data["fear_greed_signal"] = classify_fear_greed(fg_score)
 
-    # Fed funds (manually updated — changes only ~8x/year)
-    data["fed_funds_rate"] = "3.50-3.75"
-
-    # Mortgage rates (approximated from 10Y + spread)
+    # --- Mortgage rates (approximated from 10Y + spread) ---
     y10_val = yields.get("yield_10y")
     if y10_val:
-        data["mortgage_30y"] = round(y10_val + 2.2, 2)  # typical spread ~220bps
+        data["mortgage_30y"] = round(y10_val + 2.2, 2)
         data["mortgage_15y"] = round(y10_val + 1.5, 2)
     data["mortgage_signal"] = classify_mortgage(data.get("mortgage_30y"))
 
-    # Overall market regime
-    red_count = sum(1 for s in [data.get("vix_signal"), data.get("oil_signal"),
-                                 data.get("sp500_signal")]
-                    if s in ("extreme_fear", "elevated", "crisis", "correction"))
+    # --- S&P Sector Performance ---
+    print("  Sector performance...")
+    sectors = get_sector_performance()
+    data["sector_performance"] = sectors  # dict of {sector_name: daily_change_pct}
+
+    # --- Overall market regime ---
+    # Count red signals across key indicators
+    key_signals = [
+        data.get("vix_signal"),
+        data.get("oil_signal"),
+        data.get("sp500_signal"),
+        data.get("fear_greed_signal"),
+    ]
+    red_count = sum(1 for s in key_signals if s == "red")
+    yellow_count = sum(1 for s in key_signals if s == "yellow")
+
     if red_count >= 2:
         data["market_regime"] = "risk_off"
-    elif red_count == 1:
+    elif red_count >= 1 or yellow_count >= 3:
         data["market_regime"] = "cautious"
     else:
         data["market_regime"] = "risk_on"
