@@ -22,7 +22,7 @@ def safe_float(val):
 
 
 def get_price_and_meta(ticker):
-    """Get current price, previous close, and 50-day MA for a ticker."""
+    """Get current price, previous close, 50-day MA, and 52-week change for a ticker."""
     try:
         t = yf.Ticker(ticker)
         info = t.info
@@ -30,14 +30,16 @@ def get_price_and_meta(ticker):
         prev_close = safe_float(info.get("regularMarketPreviousClose")) or safe_float(info.get("previousClose"))
         fifty_day_ma = safe_float(info.get("fiftyDayAverage"))
         two_hundred_day_ma = safe_float(info.get("twoHundredDayAverage"))
+        yoy_change_pct = safe_float(info.get("fiftyTwoWeekChangePercent"))
         return {
             "price": price,
             "prev_close": prev_close,
             "fifty_day_ma": fifty_day_ma,
             "two_hundred_day_ma": two_hundred_day_ma,
+            "yoy_change_pct": round(yoy_change_pct, 2) if yoy_change_pct is not None else None,
         }
     except Exception:
-        return {"price": None, "prev_close": None, "fifty_day_ma": None, "two_hundred_day_ma": None}
+        return {"price": None, "prev_close": None, "fifty_day_ma": None, "two_hundred_day_ma": None, "yoy_change_pct": None}
 
 
 def get_price(ticker):
@@ -235,6 +237,7 @@ def fetch_macro_data():
     vix_chg, vix_pct = daily_change(data["vix"], vix_meta["prev_close"])
     data["vix_daily_change"] = vix_chg
     data["vix_daily_change_pct"] = vix_pct
+    data["vix_yoy_pct"] = vix_meta["yoy_change_pct"]
     data["vix_signal"] = classify_vix(data["vix"])
     time.sleep(1.0)
 
@@ -261,6 +264,7 @@ def fetch_macro_data():
     oil_chg, oil_pct = daily_change(data["oil_wti"], oil_meta["prev_close"])
     data["oil_daily_change"] = oil_chg
     data["oil_daily_change_pct"] = oil_pct
+    data["oil_yoy_pct"] = oil_meta["yoy_change_pct"]
     data["oil_signal"] = classify_oil(data["oil_wti"])
     time.sleep(1.0)
 
@@ -273,6 +277,7 @@ def fetch_macro_data():
     gold_chg, gold_pct = daily_change(data["gold"], gold_meta["prev_close"])
     data["gold_daily_change"] = gold_chg
     data["gold_daily_change_pct"] = gold_pct
+    data["gold_yoy_pct"] = gold_meta["yoy_change_pct"]
     # Gold signal: distance from 50-day MA
     if data["gold"] and data["gold_50d_ma"] and data["gold_50d_ma"] > 0:
         data["gold_ma_pct"] = round(((data["gold"] - data["gold_50d_ma"]) / data["gold_50d_ma"]) * 100, 2)
@@ -289,6 +294,7 @@ def fetch_macro_data():
     dxy_chg, dxy_pct = daily_change(data["dxy"], dxy_meta["prev_close"])
     data["dxy_daily_change"] = dxy_chg
     data["dxy_daily_change_pct"] = dxy_pct
+    data["dxy_yoy_pct"] = dxy_meta["yoy_change_pct"]
     data["dxy_signal"] = classify_dxy(data["dxy"])
     time.sleep(1.0)
 
@@ -301,6 +307,7 @@ def fetch_macro_data():
     sp_chg, sp_pct = daily_change(data["sp500"], sp_meta["prev_close"])
     data["sp500_daily_change"] = sp_chg
     data["sp500_daily_change_pct"] = sp_pct
+    data["sp500_yoy_pct"] = sp_meta["yoy_change_pct"]
 
     data["sp500_signal_static"] = classify_sp500_static(data["sp500"])
     data["sp500_signal_ma"] = classify_sp500_ma(data["sp500"], sp_meta["fifty_day_ma"])

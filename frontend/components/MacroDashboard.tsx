@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import MacroDrilldown from './MacroDrilldown';
+import MarketNews from './MarketNews';
 
 interface MacroData {
   [key: string]: any;
@@ -20,6 +21,16 @@ function DailyChange({ change, pct }: { change: number | null; pct: number | nul
     <span className="text-xs font-medium ml-1" style={{ color: isUp ? '#1D9E75' : '#E24B4A' }}>
       {isUp ? '▲' : '▼'} {Math.abs(pct).toFixed(2)}%
     </span>
+  );
+}
+
+function YoYChange({ pct }: { pct: number | null }) {
+  if (pct == null) return null;
+  const isUp = pct >= 0;
+  return (
+    <div className="text-xs mt-0.5" style={{ color: isUp ? '#1D9E75' : '#E24B4A' }}>
+      YoY: {isUp ? '+' : ''}{pct.toFixed(1)}%
+    </div>
   );
 }
 
@@ -137,7 +148,8 @@ export default function MacroDashboard({ data }: { data: MacroData | null }) {
             {data.vix?.toFixed(2)}
             <DailyChange change={data.vix_daily_change} pct={data.vix_daily_change_pct} />
           </div>
-          <p className="text-xs mt-2" style={{ color: 'var(--text-secondary)' }}>{getSignalNote('vix', data)}</p>
+          <YoYChange pct={data.vix_yoy_pct} />
+          <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>{getSignalNote('vix', data)}</p>
         </Card>
       </div>
 
@@ -241,6 +253,7 @@ export default function MacroDashboard({ data }: { data: MacroData | null }) {
               <Signal color={data.oil_signal || 'gray'} />${data.oil_wti?.toFixed(2)}
               <DailyChange change={data.oil_daily_change} pct={data.oil_daily_change_pct} />
             </div>
+            <YoYChange pct={data.oil_yoy_pct} />
           </Card>
           <Card label="Gold (vs 50d MA)" onClick={() => setDrilldown({ indicator: 'gold', label: 'Gold (Spot)' })}>
             <div className="text-lg font-semibold">
@@ -250,12 +263,14 @@ export default function MacroDashboard({ data }: { data: MacroData | null }) {
             <div className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
               {data.gold_ma_pct != null ? `${data.gold_ma_pct > 0 ? '+' : ''}${data.gold_ma_pct.toFixed(1)}% from 50d MA` : ''}
             </div>
+            <YoYChange pct={data.gold_yoy_pct} />
           </Card>
           <Card label="DXY (USD index)" onClick={() => setDrilldown({ indicator: 'dxy', label: 'US Dollar Index (DXY)' })}>
             <div className="text-lg font-semibold">
               <Signal color={data.dxy_signal || 'gray'} />{data.dxy?.toFixed(2)}
               <DailyChange change={data.dxy_daily_change} pct={data.dxy_daily_change_pct} />
             </div>
+            <YoYChange pct={data.dxy_yoy_pct} />
           </Card>
           <Card label="30-yr mortgage" onClick={() => setDrilldown({ indicator: 'mortgage', label: '30-Year Mortgage Rate' })}>
             <div className="text-lg font-semibold">
@@ -264,6 +279,9 @@ export default function MacroDashboard({ data }: { data: MacroData | null }) {
           </Card>
         </div>
       </div>
+
+      {/* Market News */}
+      <MarketNews />
     </div>
   );
 }

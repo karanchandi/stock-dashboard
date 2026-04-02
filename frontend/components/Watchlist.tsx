@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import TickerFeed from './TickerFeed';
 
 interface WatchlistItem {
   id: number;
@@ -44,6 +45,7 @@ export default function Watchlist({ onSelectTicker, latestPrices }: WatchlistPro
   const [newStatus, setNewStatus] = useState('watching');
   const [newShares, setNewShares] = useState('');
   const [newCostBasis, setNewCostBasis] = useState('');
+  const [expandedFeed, setExpandedFeed] = useState<string | null>(null);
 
   async function fetchWatchlist() {
     setLoading(true);
@@ -235,7 +237,19 @@ export default function Watchlist({ onSelectTicker, latestPrices }: WatchlistPro
                   {item.target_sell_price && <span>Sell target: ${fmt(item.target_sell_price)}</span>}
                   {item.shares_held > 0 && <span>{item.shares_held} shares @ ${fmt(item.avg_cost_basis)}</span>}
                   {item.notes && <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>{item.notes}</span>}
+                  <button
+                    onClick={() => setExpandedFeed(expandedFeed === item.ticker ? null : item.ticker)}
+                    className="text-xs px-2 py-0.5 rounded ml-auto"
+                    style={{ background: 'var(--bg-secondary)', border: '0.5px solid var(--border)', color: 'var(--text-secondary)' }}
+                  >
+                    {expandedFeed === item.ticker ? 'Hide feed' : 'News & sentiment'}
+                  </button>
                 </div>
+                {expandedFeed === item.ticker && (
+                  <div className="mt-3">
+                    <TickerFeed ticker={item.ticker} />
+                  </div>
+                )}
               </div>
             );
           })}

@@ -1,0 +1,124 @@
+import { NextRequest, NextResponse } from 'next/server';
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const ticker = searchParams.get('ticker');
+  const type = searchParams.get('type') || 'ticker'; // 'ticker' or 'macro'
+
+  const articles: any[] = [];
+
+  try {
+    if (type === 'macro') {
+      // Macro market news from Google News RSS
+      const feeds = [
+        'https://news.google.com/rss/search?q=stock+market+today&hl=en-US&gl=US&ceid=US:en',
+        'https://news.google.com/rss/search?q=federal+reserve+interest+rates&hl=en-US&gl=US&ceid=US:en',
+        'https://news.google.com/rss/search?q=oil+prices+economy&hl=en-US&gl=US&ceid=US:en',
+      ];
+
+      for (const feedUrl of feeds) {
+        try {
+          const res = await fetch(feedUrl, {
+            headers: { 'User-Agent': 'Mozilla/5.0' },
+            next: { revalidate: 600 },
+          });
+          if (res.ok) {
+            const xml = await res.text();
+            const items = parseRssItems(xml, 5);
+            articles.push(...items);
+          }
+        } catch {}
+      }
+
+      // Deduplicate by title similarity and sort by date
+      const seen = new Set<string>();
+      const unique = articles.filter(a => {
+        const key = a.title.toLowerCase().substring(0, 50);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+      unique.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+      return NextResponse.json({ articles: unique.slice(0, 15) });
+
+    } else if (ticker) {
+      // Ticker-specific news
+      // Yahoo Finance news
+      try {
+        const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?range=5d&interval=1d`;
+        // Yahoo doesn't have a clean news endpoint we can proxy easily, so use Google News
+      } catch {}
+
+      // Google News for ticker
+      const query = encodeURIComponent(`${ticker} stock`);
+      try {
+        const res = await fetch(
+          `https://news.google.com/rss/search?q=${query}&hl=en-US&gl=US&ceid=US:en`,
+          { headers: { 'User-Agent': 'Mozilla/5.0' }, next: { revalidate: 600 } }
+        );
+        if (res.ok) {
+          const xml = await res.text();
+          const items = parseRssItems(xml, 10);
+          articles.push(...items);
+        }
+      } catch {}
+
+      articles.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+      return NextResponse.json({ articles: articles.slice(0, 10) });
+    }
+
+    return NextResponse.json({ articles: [] });
+  } catch {
+    return NextResponse.json({ articles: [] }, { status: 500 });
+  }
+}
+
+function parseRssItems(xml: string, limit: number): any[] {
+  const items: any[] = [];
+  const itemRegex = /<item>([\s\S]*?)<\/item>/g;
+  let match;
+  let count = 0;
+
+  while ((match = itemRegex.exec(xml)) !== null && count < limit) {
+    const itemXml = match[1];
+    const title = extractTag(itemXml, 'title');
+    const link = extractTag(itemXml, 'link');
+    const pubDate = extractTag(itemXml, 'pubDate');
+    const source = extractTag(itemXml, 'source');
+
+    if (title && link) {
+      items.push({
+        title: decodeHtmlEntities(title),
+        link,
+        pubDate: pubDate || '',
+        source: source || extractDomain(link),
+      });
+      count++;
+    }
+  }
+  return items;
+}
+
+function extractTag(xml: string, tag: string): string {
+  const match = xml.match(new RegExp(`<${tag}[^>]*>(?:<!\\[CDATA\\[)?(.*?)(?:\\]\\]>)?</${tag}>`, 's'));
+  return match ? match[1].trim() : '';
+}
+
+function extractDomain(url: string): string {
+  try {
+    return new URL(url).hostname.replace('www.', '');
+  } catch {
+    return '';
+  }
+}
+
+function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/g, "'");
+}

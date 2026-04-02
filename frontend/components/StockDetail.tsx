@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import PriceChart from './PriceChart';
+import TickerFeed from './TickerFeed';
 
 interface StockDetailProps {
   ticker: string;
@@ -164,6 +165,34 @@ export default function StockDetail({ ticker, onBack, onAddToWatchlist }: StockD
       <div className="rounded-lg p-4" style={{ background: 'var(--bg-primary)', border: '0.5px solid var(--border)' }}>
         <PriceChart ticker={s.ticker} compact={false} />
       </div>
+
+      {/* Historical score trends */}
+      {history.length > 1 && (
+        <div className="rounded-lg p-4" style={{ background: 'var(--bg-primary)', border: '0.5px solid var(--border)' }}>
+          <div className="text-xs mb-3" style={{ color: 'var(--text-secondary)' }}>Score trends (builds over time with daily runs)</div>
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart data={history}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis dataKey="run_date" tick={{ fontSize: 10, fill: 'var(--text-secondary)' }} />
+              <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: 'var(--text-secondary)' }} />
+              <Tooltip contentStyle={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
+              <Line type="monotone" dataKey="combined_score" stroke="#378ADD" strokeWidth={2} dot={false} name="Combined" />
+              <Line type="monotone" dataKey="value_score" stroke="#1D9E75" strokeWidth={1.5} dot={false} name="Value" />
+              <Line type="monotone" dataKey="analyst_score" stroke="#EF9F27" strokeWidth={1.5} dot={false} name="Analyst" />
+              <Line type="monotone" dataKey="insider_score" stroke="#534AB7" strokeWidth={1.5} dot={false} name="Insider" />
+            </LineChart>
+          </ResponsiveContainer>
+          <div className="flex gap-4 mt-2 justify-center">
+            <span className="text-xs" style={{ color: '#378ADD' }}>● Combined</span>
+            <span className="text-xs" style={{ color: '#1D9E75' }}>● Value</span>
+            <span className="text-xs" style={{ color: '#EF9F27' }}>● Analyst</span>
+            <span className="text-xs" style={{ color: '#534AB7' }}>● Insider</span>
+          </div>
+        </div>
+      )}
+
+      {/* News & Sentiment */}
+      <TickerFeed ticker={s.ticker} />
 
       {/* Valuation metrics */}
       <div>

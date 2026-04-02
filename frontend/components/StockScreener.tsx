@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import StockRowDropdown from './StockRowDropdown';
 import { supabase } from '@/lib/supabase';
+import * as XLSX from 'xlsx';
 
 interface Stock {
   ticker: string;
@@ -136,6 +137,42 @@ export default function StockScreener({ stocks, onSelectTicker, onAddToWatchlist
     setAlertModal(null);
   }
 
+  function exportToExcel() {
+    const exportData = filtered.map(s => ({
+      'Ticker': s.ticker,
+      'Company': s.name,
+      'Subsector': s.subsector,
+      'Price': s.price,
+      'Target Price': s.target_price,
+      'Upside %': s.upside_pct,
+      'Market Cap': s.market_cap,
+      'Combined Score': s.combined_score,
+      'Value Score': s.value_score,
+      'Analyst Score': s.analyst_score,
+      'Insider Score': s.insider_score,
+      'P/E': s.pe_ratio,
+      'P/B': s.pb_ratio,
+      'Div Yield %': s.dividend_yield_pct,
+      'Consensus': s.analyst_consensus,
+      'Insider Buys': s.buy_count,
+      'Insider Sells': s.sell_count,
+      'Insider Net $': s.insider_net_value,
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, filterSubsector === 'All' ? 'All Stocks' : filterSubsector);
+
+    // Auto-width columns
+    const colWidths = Object.keys(exportData[0] || {}).map(key => ({
+      wch: Math.max(key.length, 12)
+    }));
+    ws['!cols'] = colWidths;
+
+    const filename = `stock_screener_${filterSubsector === 'All' ? 'all' : filterSubsector.toLowerCase().replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(wb, filename);
+  }
+
   const COLUMN_TOOLTIPS: Record<string, string> = {
     ticker: 'Stock ticker symbol',
     name: 'Company name',
@@ -256,6 +293,13 @@ export default function StockScreener({ stocks, onSelectTicker, onAddToWatchlist
         <span className="text-xs ml-auto" style={{ color: 'var(--text-secondary)' }}>
           {filtered.length} stocks
         </span>
+        <button
+          onClick={exportToExcel}
+          className="px-3 py-1 rounded-md text-xs font-medium"
+          style={{ background: 'var(--bg-primary)', border: '0.5px solid var(--border)', color: 'var(--text-secondary)' }}
+        >
+          Export Excel
+        </button>
       </div>
 
       {/* Table */}

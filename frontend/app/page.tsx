@@ -34,9 +34,20 @@ export default function Home() {
         setLastRun(macroData.run_date);
       }
 
+      // Get the latest run date first
+      const { data: latestRun } = await supabase
+        .from('screener_results')
+        .select('run_date')
+        .order('run_date', { ascending: false })
+        .limit(1)
+        .single();
+
+      const latestDate = latestRun?.run_date || macroData?.run_date;
+
       const { data: stockData } = await supabase
         .from('screener_results')
         .select('*')
+        .eq('run_date', latestDate)
         .order('combined_score', { ascending: false, nullsFirst: false })
         .limit(500);
 
