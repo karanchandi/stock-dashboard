@@ -139,6 +139,8 @@ def run_pipeline():
             "buy_count", "sell_count", "unique_buyers",
             "total_buy_value", "total_sell_value", "insider_net_value",
             "value_score", "analyst_score", "insider_score", "combined_score",
+            "next_earnings_date", "eps_estimate", "eps_actual",
+            "eps_surprise_pct", "trailing_eps", "eps_current_year",
         }
 
         clean_results = []

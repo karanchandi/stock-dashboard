@@ -89,6 +89,33 @@ def fetch_all_data(ticker_info):
         except Exception:
             pass
 
+        # Earnings data
+        next_earnings_date = None
+        eps_estimate = None
+        eps_actual = None
+        eps_surprise_pct = None
+        try:
+            cal = stock.calendar
+            if cal and "Earnings Date" in cal:
+                dates = cal["Earnings Date"]
+                if dates and len(dates) > 0:
+                    next_earnings_date = str(dates[0])
+            if cal and "Earnings Average" in cal:
+                eps_estimate = safe_float(cal["Earnings Average"])
+        except Exception:
+            pass
+
+        try:
+            ed = stock.earnings_dates
+            if ed is not None and len(ed) >= 2:
+                # Most recent completed quarter (second row, first is upcoming)
+                recent = ed.iloc[1]
+                if recent.get("Reported EPS") is not None:
+                    eps_actual = safe_float(recent.get("Reported EPS"))
+                    eps_surprise_pct = safe_float(recent.get("Surprise(%)"))
+        except Exception:
+            pass
+
         return {
             # Fundamentals
             "ticker": ticker,
@@ -131,6 +158,13 @@ def fetch_all_data(ticker_info):
             "cq_earnings_growth": cq_growth,
             "next_yr_earnings_growth": ny_growth,
             "buy_shift_mom": buy_shift,
+            # Earnings data
+            "next_earnings_date": next_earnings_date,
+            "eps_estimate": eps_estimate,
+            "eps_actual": eps_actual,
+            "eps_surprise_pct": eps_surprise_pct,
+            "trailing_eps": safe_float(info.get("trailingEps")),
+            "eps_current_year": safe_float(info.get("epsCurrentYear")),
         }
     except Exception:
         return None
