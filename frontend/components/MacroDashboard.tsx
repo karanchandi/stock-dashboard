@@ -1,6 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import MacroDrilldown from './MacroDrilldown';
 
 interface MacroData {
   vix: number;
@@ -51,10 +53,14 @@ function SignalBadge({ color, text }: { color: 'green' | 'yellow' | 'red'; text:
   );
 }
 
-function Card({ label, children }: { label: string; children: React.ReactNode }) {
+function Card({ label, children, onClick }: { label: string; children: React.ReactNode; onClick?: () => void }) {
   return (
-    <div className="rounded-lg p-3" style={{ background: 'var(--bg-primary)', border: '0.5px solid var(--border)' }}>
-      <div className="text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>{label}</div>
+    <div
+      className={`rounded-lg p-3 ${onClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+      style={{ background: 'var(--bg-primary)', border: '0.5px solid var(--border)' }}
+      onClick={onClick}
+    >
+      <div className="text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>{label}{onClick ? ' →' : ''}</div>
       {children}
     </div>
   );
@@ -107,12 +113,18 @@ function getFearGreedLabel(label: string): string {
 }
 
 export default function MacroDashboard({ data }: { data: MacroData | null }) {
+  const [drilldown, setDrilldown] = useState<{ indicator: string; label: string } | null>(null);
+
   if (!data) {
     return (
       <div className="text-center py-20 text-sm" style={{ color: 'var(--text-secondary)' }}>
         No macro data available yet. Run the pipeline first.
       </div>
     );
+  }
+
+  if (drilldown) {
+    return <MacroDrilldown indicator={drilldown.indicator} label={drilldown.label} onClose={() => setDrilldown(null)} />;
   }
 
   const yieldCurve = [
@@ -164,7 +176,7 @@ export default function MacroDashboard({ data }: { data: MacroData | null }) {
 
       {/* Sentiment row */}
       <div className="grid grid-cols-2 gap-3">
-        <Card label="Fear & greed index">
+        <Card label="Fear & greed index" onClick={() => setDrilldown({ indicator: 'fear_greed', label: 'Fear & Greed Index' })}>
           <div className="text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>
             <Signal color={getFearGreedSignal(data.fear_greed_index)} />
             {data.fear_greed_index}
@@ -183,7 +195,7 @@ export default function MacroDashboard({ data }: { data: MacroData | null }) {
           </div>
         </Card>
 
-        <Card label="VIX (volatility index)">
+        <Card label="VIX (volatility index)" onClick={() => setDrilldown({ indicator: 'vix', label: 'VIX Volatility Index' })}>
           <div className="text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>
             <Signal color={getVixSignal(data.vix)} />
             {data.vix?.toFixed(2)}
@@ -200,10 +212,10 @@ export default function MacroDashboard({ data }: { data: MacroData | null }) {
           Treasury yields & yield curve
         </div>
         <div className="grid grid-cols-4 gap-3 mb-3">
-          <Card label="2-year">{<div className="text-lg font-semibold">{data.yield_2y?.toFixed(2)}%</div>}</Card>
-          <Card label="10-year">{<div className="text-lg font-semibold">{data.yield_10y?.toFixed(2)}%</div>}</Card>
-          <Card label="30-year">{<div className="text-lg font-semibold">{data.yield_30y?.toFixed(2)}%</div>}</Card>
-          <Card label="2s/10s spread">
+          <Card label="2-year" onClick={() => setDrilldown({ indicator: 'yield_2y', label: '2-Year Treasury Yield' })}>{<div className="text-lg font-semibold">{data.yield_2y?.toFixed(2)}%</div>}</Card>
+          <Card label="10-year" onClick={() => setDrilldown({ indicator: 'yield_10y', label: '10-Year Treasury Yield' })}>{<div className="text-lg font-semibold">{data.yield_10y?.toFixed(2)}%</div>}</Card>
+          <Card label="30-year" onClick={() => setDrilldown({ indicator: 'yield_30y', label: '30-Year Treasury Yield' })}>{<div className="text-lg font-semibold">{data.yield_30y?.toFixed(2)}%</div>}</Card>
+          <Card label="2s/10s spread" onClick={() => setDrilldown({ indicator: 'spread', label: '2s/10s Yield Spread' })}>
             <div className="text-lg font-semibold">
               <Signal color={data.spread_2s10s < 0 ? 'red' : data.spread_2s10s < 50 ? 'yellow' : 'green'} />
               {data.spread_2s10s > 0 ? '+' : ''}{data.spread_2s10s?.toFixed(0)} bps
@@ -239,16 +251,16 @@ export default function MacroDashboard({ data }: { data: MacroData | null }) {
           Commodities & rates
         </div>
         <div className="grid grid-cols-4 gap-3">
-          <Card label="WTI crude oil">
+          <Card label="WTI crude oil" onClick={() => setDrilldown({ indicator: 'oil', label: 'WTI Crude Oil' })}>
             <div className="text-lg font-semibold"><Signal color={getOilSignal(data.oil_wti)} />${data.oil_wti?.toFixed(2)}</div>
           </Card>
-          <Card label="Gold">
+          <Card label="Gold" onClick={() => setDrilldown({ indicator: 'gold', label: 'Gold (spot)' })}>
             <div className="text-lg font-semibold"><Signal color={getGoldSignal(data.gold)} />${data.gold?.toLocaleString()}</div>
           </Card>
-          <Card label="DXY (USD index)">
+          <Card label="DXY (USD index)" onClick={() => setDrilldown({ indicator: 'dxy', label: 'US Dollar Index (DXY)' })}>
             <div className="text-lg font-semibold"><Signal color={getDxySignal(data.dxy)} />{data.dxy?.toFixed(2)}</div>
           </Card>
-          <Card label="30-yr mortgage">
+          <Card label="30-yr mortgage" onClick={() => setDrilldown({ indicator: 'mortgage', label: '30-Year Mortgage Rate' })}>
             <div className="text-lg font-semibold"><Signal color={getMortgageSignal(data.mortgage_30y)} />{data.mortgage_30y?.toFixed(2)}%</div>
           </Card>
         </div>

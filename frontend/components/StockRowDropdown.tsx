@@ -78,6 +78,15 @@ export default function StockRowDropdown({ stock, onViewFullDetails, onAddToWatc
               value={s.insider_net_value != null ? (s.insider_net_value >= 0 ? '+' : '') + fmtCompact(s.insider_net_value) : '-'}
               color={s.insider_net_value > 0 ? '#1D9E75' : s.insider_net_value < 0 ? '#E24B4A' : undefined}
             />
+            <MetricBox
+              label="Next earnings"
+              value={s.next_earnings_date ? new Date(s.next_earnings_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '-'}
+            />
+            <MetricBox
+              label="Last EPS"
+              value={s.eps_actual != null ? `$${s.eps_actual.toFixed(2)}${s.eps_surprise_pct != null ? (s.eps_surprise_pct > 0 ? ' Beat' : ' Miss') : ''}` : '-'}
+              color={s.eps_surprise_pct > 0 ? '#1D9E75' : s.eps_surprise_pct < 0 ? '#E24B4A' : undefined}
+            />
           </div>
 
           {/* 52-week range mini */}

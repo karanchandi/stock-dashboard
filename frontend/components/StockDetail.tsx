@@ -218,6 +218,48 @@ export default function StockDetail({ ticker, onBack, onAddToWatchlist }: StockD
         </div>
       </div>
 
+      {/* Earnings */}
+      <div>
+        <div className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: 'var(--text-secondary)' }}>Earnings</div>
+        <div className="grid grid-cols-4 gap-3">
+          <Card label="Next earnings date">
+            <div className="text-lg font-semibold">{s.next_earnings_date ? new Date(s.next_earnings_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-'}</div>
+          </Card>
+          <Card label="EPS estimate (next Q)">
+            <div className="text-lg font-semibold">{s.eps_estimate ? `$${fmt(s.eps_estimate)}` : '-'}</div>
+          </Card>
+          <Card label="EPS actual (last Q)">
+            <div className="text-lg font-semibold">{s.eps_actual != null ? `$${fmt(s.eps_actual)}` : '-'}</div>
+          </Card>
+          <Card label="EPS surprise">
+            <div className="text-lg font-semibold" style={{ color: s.eps_surprise_pct > 0 ? '#1D9E75' : s.eps_surprise_pct < 0 ? '#E24B4A' : 'var(--text-primary)' }}>
+              {s.eps_surprise_pct != null ? (
+                <span>
+                  {s.eps_surprise_pct > 0 ? 'Beat ' : 'Miss '}
+                  {Math.abs(s.eps_surprise_pct).toFixed(1)}%
+                </span>
+              ) : '-'}
+            </div>
+          </Card>
+        </div>
+        <div className="grid grid-cols-4 gap-3 mt-3">
+          <Card label="Trailing EPS (TTM)">
+            <div className="text-lg font-semibold">{s.trailing_eps ? `$${fmt(s.trailing_eps)}` : '-'}</div>
+          </Card>
+          <Card label="Forward EPS">
+            <div className="text-lg font-semibold">{s.forward_eps ? `$${fmt(s.forward_eps)}` : '-'}</div>
+          </Card>
+          <Card label="EPS current year">
+            <div className="text-lg font-semibold">{s.eps_current_year ? `$${fmt(s.eps_current_year)}` : '-'}</div>
+          </Card>
+          <Card label="Earnings growth">
+            <div className="text-lg font-semibold" style={{ color: s.earnings_growth > 0 ? '#1D9E75' : s.earnings_growth < 0 ? '#E24B4A' : 'var(--text-primary)' }}>
+              {s.earnings_growth ? `${(s.earnings_growth * 100).toFixed(1)}%` : '-'}
+            </div>
+          </Card>
+        </div>
+      </div>
+
       {/* 52-week range */}
       <div>
         <div className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: 'var(--text-secondary)' }}>52-week range</div>

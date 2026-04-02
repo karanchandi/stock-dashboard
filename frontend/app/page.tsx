@@ -6,8 +6,9 @@ import MacroDashboard from '@/components/MacroDashboard';
 import StockScreener from '@/components/StockScreener';
 import StockDetail from '@/components/StockDetail';
 import Watchlist from '@/components/Watchlist';
+import PriceAlerts from '@/components/PriceAlerts';
 
-type Tab = 'macro' | 'screener' | 'watchlist';
+type Tab = 'macro' | 'screener' | 'watchlist' | 'alerts';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<Tab>('macro');
@@ -78,6 +79,7 @@ export default function Home() {
     { key: 'macro', label: 'Macro dashboard' },
     { key: 'screener', label: 'Stock screener' },
     { key: 'watchlist', label: 'Watchlist' },
+    { key: 'alerts', label: 'Alerts' },
   ];
 
   return (
@@ -139,9 +141,11 @@ export default function Home() {
           <MacroDashboard data={macro} />
         ) : activeTab === 'screener' ? (
           <StockScreener stocks={stocks} onSelectTicker={handleSelectTicker} onAddToWatchlist={handleAddToWatchlist} />
-        ) : (
+        ) : activeTab === 'watchlist' ? (
           <Watchlist onSelectTicker={handleSelectTicker} latestPrices={latestPrices} />
-        )}
+        ) : activeTab === 'alerts' ? (
+          <PriceAlerts latestPrices={latestPrices} onSelectTicker={handleSelectTicker} />
+        ) : null}
       </main>
     </div>
   );
