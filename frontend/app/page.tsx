@@ -10,6 +10,15 @@ import PriceAlerts from '@/components/PriceAlerts';
 
 type Tab = 'macro' | 'screener' | 'watchlist' | 'alerts';
 
+function PulseLogo() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="28" height="28" rx="7" fill="var(--brand)" />
+      <path d="M5 15H9L11 9L14 19L17 11L19 15H23" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState<Tab>('macro');
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
@@ -58,7 +67,6 @@ export default function Home() {
     fetchData();
   }, []);
 
-  // Build a price lookup for the watchlist
   const latestPrices = useMemo(() => {
     const map: Record<string, number> = {};
     stocks.forEach(s => {
@@ -86,61 +94,75 @@ export default function Home() {
     }
   }
 
-  const tabs: { key: Tab; label: string }[] = [
-    { key: 'macro', label: 'Macro dashboard' },
-    { key: 'screener', label: 'Stock screener' },
-    { key: 'watchlist', label: 'Watchlist' },
-    { key: 'alerts', label: 'Alerts' },
+  const tabs: { key: Tab; label: string; icon: string }[] = [
+    { key: 'macro', label: 'Macro', icon: '◉' },
+    { key: 'screener', label: 'Value Scanner', icon: '⊞' },
+    { key: 'watchlist', label: 'Watchlist', icon: '★' },
+    { key: 'alerts', label: 'Alerts', icon: '⚡' },
   ];
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-secondary)' }}>
-      <header className="border-b" style={{ background: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1
-              className="text-xl font-semibold cursor-pointer"
-              style={{ color: 'var(--text-primary)' }}
-              onClick={() => { setSelectedTicker(null); setActiveTab('macro'); }}
-            >
-              Stock Dashboard
-            </h1>
-            {lastRun && (
-              <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
-                Last refresh: {new Date(lastRun + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-              </p>
-            )}
+      {/* Header */}
+      <header style={{ background: 'var(--bg-primary)', borderBottom: '1px solid var(--border)', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div
+            className="flex items-center gap-2.5 cursor-pointer"
+            onClick={() => { setSelectedTicker(null); setActiveTab('macro'); }}
+          >
+            <PulseLogo />
+            <div>
+              <h1 className="text-lg font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                Market<span style={{ color: 'var(--brand)' }}>Pulse</span>
+              </h1>
+              {lastRun && (
+                <p className="text-xs" style={{ color: 'var(--text-tertiary)', marginTop: -1 }}>
+                  Updated {new Date(lastRun + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </p>
+              )}
+            </div>
           </div>
           {!selectedTicker && (
-            <div className="flex gap-1 p-1 rounded-lg" style={{ background: 'var(--bg-secondary)' }}>
+            <nav className="flex gap-0.5 p-1 rounded-lg" style={{ background: 'var(--bg-secondary)' }}>
               {tabs.map(tab => (
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
-                  className="px-4 py-1.5 rounded-md text-sm font-medium transition-all"
+                  className="px-4 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-1.5"
                   style={{
                     background: activeTab === tab.key ? 'var(--bg-primary)' : 'transparent',
-                    color: activeTab === tab.key ? 'var(--text-primary)' : 'var(--text-secondary)',
-                    boxShadow: activeTab === tab.key ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
+                    color: activeTab === tab.key ? 'var(--brand)' : 'var(--text-secondary)',
+                    boxShadow: activeTab === tab.key ? 'var(--card-shadow)' : 'none',
+                    fontWeight: activeTab === tab.key ? 600 : 500,
                   }}
                 >
+                  <span style={{ fontSize: 11, opacity: activeTab === tab.key ? 1 : 0.5 }}>{tab.icon}</span>
                   {tab.label}
                 </button>
               ))}
-            </div>
+            </nav>
           )}
           {selectedTicker && (
-            <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-              Viewing: <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{selectedTicker}</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleBack}
+                className="px-3 py-1.5 rounded-md text-sm font-medium"
+                style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
+              >
+                ← Back
+              </button>
+              <span className="text-sm font-semibold" style={{ color: 'var(--brand)' }}>{selectedTicker}</span>
             </div>
           )}
         </div>
       </header>
 
+      {/* Main content */}
       <main className="max-w-7xl mx-auto px-4 py-6">
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>Loading data...</div>
+          <div className="flex flex-col items-center justify-center py-20 gap-3">
+            <PulseLogo />
+            <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>Loading MarketPulse...</div>
           </div>
         ) : selectedTicker ? (
           <StockDetail

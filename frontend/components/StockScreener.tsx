@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import StockRowDropdown from './StockRowDropdown';
 import { supabase } from '@/lib/supabase';
 import * as XLSX from 'xlsx';
@@ -79,6 +79,46 @@ export default function StockScreener({ stocks, onSelectTicker, onAddToWatchlist
   const [alertType, setAlertType] = useState('below');
   const [alertPrice, setAlertPrice] = useState('');
   const [alertNotes, setAlertNotes] = useState('');
+  const [presets, setPresets] = useState<{ id: number; name: string; subsector: string; sort_key: string; sort_asc: boolean; search: string }[]>([]);
+  const [showPresetSave, setShowPresetSave] = useState(false);
+  const [presetName, setPresetName] = useState('');
+
+  // Load presets from Supabase
+  async function fetchPresets() {
+    const { data } = await supabase
+      .from('saved_filters')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (data) setPresets(data);
+  }
+
+  useEffect(() => { fetchPresets(); }, []);
+
+  async function savePreset() {
+    if (!presetName.trim()) return;
+    await supabase.from('saved_filters').insert({
+      name: presetName.trim(),
+      subsector: filterSubsector,
+      sort_key: sortKey as string,
+      sort_asc: sortAsc,
+      search: searchTerm,
+    });
+    setPresetName('');
+    setShowPresetSave(false);
+    fetchPresets();
+  }
+
+  function loadPreset(preset: typeof presets[0]) {
+    setFilterSubsector(preset.subsector);
+    setSortKey(preset.sort_key as SortKey);
+    setSortAsc(preset.sort_asc);
+    setSearchTerm(preset.search);
+  }
+
+  async function deletePreset(id: number) {
+    await supabase.from('saved_filters').delete().eq('id', id);
+    fetchPresets();
+  }
 
   const subsectors = useMemo(() => {
     const subs = [...new Set(stocks.map((s) => s.subsector).filter(Boolean))].sort();
@@ -281,8 +321,8 @@ export default function StockScreener({ stocks, onSelectTicker, onAddToWatchlist
               onClick={() => setFilterSubsector(sub)}
               className="px-3 py-1 rounded-md text-xs font-medium transition-all"
               style={{
-                background: filterSubsector === sub ? 'var(--text-primary)' : 'var(--bg-primary)',
-                color: filterSubsector === sub ? 'var(--bg-primary)' : 'var(--text-secondary)',
+                background: filterSubsector === sub ? 'var(--brand)' : 'var(--bg-primary)',
+                color: filterSubsector === sub ? 'white' : 'var(--text-secondary)',
                 border: '0.5px solid var(--border)',
               }}
             >
@@ -300,7 +340,52 @@ export default function StockScreener({ stocks, onSelectTicker, onAddToWatchlist
         >
           Export Excel
         </button>
+        <button
+          onClick={() => setShowPresetSave(!showPresetSave)}
+          className="px-3 py-1 rounded-md text-xs font-medium"
+          style={{ background: 'var(--brand)', color: 'white' }}
+        >
+          Save filter
+        </button>
       </div>
+
+      {/* Saved presets */}
+      {(presets.length > 0 || showPresetSave) && (
+        <div className="flex items-center gap-2 flex-wrap">
+          {showPresetSave && (
+            <div className="flex items-center gap-1">
+              <input
+                value={presetName}
+                onChange={e => setPresetName(e.target.value)}
+                placeholder="Preset name..."
+                className="px-2 py-1 rounded text-xs"
+                style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', color: 'var(--text-primary)', outline: 'none', width: 140 }}
+                onKeyDown={e => e.key === 'Enter' && savePreset()}
+              />
+              <button onClick={savePreset} className="px-2 py-1 rounded text-xs font-medium" style={{ background: 'var(--brand)', color: 'white' }}>Save</button>
+            </div>
+          )}
+          {presets.map((preset) => (
+            <div key={preset.id} className="flex items-center gap-0.5">
+              <button
+                onClick={() => loadPreset(preset)}
+                className="px-2.5 py-1 rounded-l-md text-xs font-medium"
+                style={{ background: 'var(--brand-light)', color: 'var(--brand)', border: '1px solid var(--brand)', borderRight: 'none' }}
+              >
+                {preset.name}
+              </button>
+              <button
+                onClick={() => deletePreset(preset.id)}
+                className="px-1.5 py-1 rounded-r-md text-xs"
+                style={{ background: 'var(--brand-light)', color: 'var(--brand)', border: '1px solid var(--brand)' }}
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+          {presets.length > 0 && <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Saved filters</span>}
+        </div>
+      )}
 
       {/* Table */}
       <div className="rounded-lg overflow-hidden" style={{ background: 'var(--bg-primary)', border: '0.5px solid var(--border)' }}>

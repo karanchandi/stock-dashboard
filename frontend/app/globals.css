@@ -2,28 +2,60 @@
 
 :root {
   --bg-primary: #ffffff;
-  --bg-secondary: #f8f9fa;
-  --text-primary: #1a1a1a;
+  --bg-secondary: #f4f5f7;
+  --bg-tertiary: #ebedf0;
+  --text-primary: #1a1a2e;
   --text-secondary: #6b7280;
-  --border: #e5e7eb;
+  --text-tertiary: #9ca3af;
+  --border: #e2e5ea;
+  --border-light: #f0f1f3;
+  --brand: #0d7a5f;
+  --brand-light: #e6f5f0;
+  --brand-dark: #095e49;
   --green: #1D9E75;
+  --green-light: #E1F5EE;
   --yellow: #EF9F27;
+  --yellow-light: #FAEEDA;
   --red: #E24B4A;
+  --red-light: #FCEBEB;
   --blue: #378ADD;
+  --blue-light: #E8F1FC;
+  --purple: #6C5CE7;
+  --card-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
+  --card-shadow-hover: 0 4px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg-primary: #1a1a1a;
-    --bg-secondary: #252525;
-    --text-primary: #e5e5e5;
-    --text-secondary: #9ca3af;
-    --border: #374151;
+    --bg-primary: #1a1a2e;
+    --bg-secondary: #16162a;
+    --bg-tertiary: #222240;
+    --text-primary: #e8e8f0;
+    --text-secondary: #9ca3b8;
+    --text-tertiary: #6b7290;
+    --border: #2a2a45;
+    --border-light: #222240;
+    --brand: #1D9E75;
+    --brand-light: rgba(29,158,117,0.12);
+    --brand-dark: #17b882;
+    --green-light: rgba(29,158,117,0.12);
+    --yellow-light: rgba(239,159,39,0.12);
+    --red-light: rgba(226,75,74,0.12);
+    --blue-light: rgba(55,138,221,0.12);
+    --card-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    --card-shadow-hover: 0 4px 12px rgba(0,0,0,0.3);
   }
 }
 
 body {
   background: var(--bg-secondary);
   color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }

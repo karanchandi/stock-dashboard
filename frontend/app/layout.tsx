@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Stock Dashboard",
-  description: "Macro indicators & value stock screener",
+  title: "MarketPulse",
+  description: "Macro indicators, value screening & portfolio intelligence",
 };
 
 export default function RootLayout({
