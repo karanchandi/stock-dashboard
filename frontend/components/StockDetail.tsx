@@ -54,10 +54,12 @@ function fmtGrowth(v: any): string {
 function fmtMcap(mc: any): string {
   if (mc == null) return '-';
   const n = Number(mc);
-  if (n >= 1e12) return `$${(n / 1e12).toFixed(1)}T`;
-  if (n >= 1e9) return `$${(n / 1e9).toFixed(1)}B`;
-  if (n >= 1e6) return `$${(n / 1e6).toFixed(0)}M`;
-  return `$${n.toLocaleString()}`;
+  const abs = Math.abs(n);
+  const sign = n < 0 ? '-' : '';
+  if (abs >= 1e12) return `${sign}$${(abs / 1e12).toFixed(1)}T`;
+  if (abs >= 1e9) return `${sign}$${(abs / 1e9).toFixed(1)}B`;
+  if (abs >= 1e6) return `${sign}$${(abs / 1e6).toFixed(0)}M`;
+  return `${sign}$${abs.toLocaleString()}`;
 }
 
 function fmtDollar(v: any): string {
@@ -153,7 +155,7 @@ export default function StockDetail({ ticker, onBack, onAddToWatchlist }: StockD
       </div>
 
       {/* Scores */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
         <Card label="Combined score">
           <div className="text-2xl font-semibold"><Signal color={scoreColor(s.combined_score)} />{fmt(s.combined_score, 1)}</div>
         </Card>
@@ -204,7 +206,7 @@ export default function StockDetail({ ticker, onBack, onAddToWatchlist }: StockD
       {/* Valuation metrics */}
       <div>
         <div className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: 'var(--text-secondary)' }}>Valuation</div>
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           <Card label="P/E ratio"><div className="text-lg font-semibold">{fmt(s.pe_ratio, 1)}</div></Card>
           <Card label="Forward P/E"><div className="text-lg font-semibold">{fmt(s.forward_pe, 1)}</div></Card>
           <Card label="P/B ratio"><div className="text-lg font-semibold">{fmt(s.pb_ratio, 2)}</div></Card>
@@ -215,13 +217,13 @@ export default function StockDetail({ ticker, onBack, onAddToWatchlist }: StockD
       {/* Financials */}
       <div>
         <div className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: 'var(--text-secondary)' }}>Financials</div>
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           <Card label="Market cap"><div className="text-lg font-semibold">{fmtMcap(s.market_cap)}</div></Card>
           <Card label="Annual revenue"><div className="text-lg font-semibold">{fmtMcap(s.total_revenue)}</div></Card>
           <Card label="Net income"><div className="text-lg font-semibold" style={{ color: s.net_income > 0 ? '#1D9E75' : s.net_income < 0 ? '#E24B4A' : 'var(--text-primary)' }}>{fmtMcap(s.net_income)}</div></Card>
           <Card label="Profit margin"><div className="text-lg font-semibold">{s.profit_margin ? `${(s.profit_margin * 100).toFixed(1)}%` : '-'}</div></Card>
         </div>
-        <div className="grid grid-cols-4 gap-3 mt-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mt-3">
           <Card label="Revenue growth"><div className="text-lg font-semibold" style={{ color: s.revenue_growth > 0 ? '#1D9E75' : s.revenue_growth < 0 ? '#E24B4A' : 'var(--text-primary)' }}>{fmtGrowth(s.revenue_growth)}</div></Card>
           <Card label="Earnings growth"><div className="text-lg font-semibold" style={{ color: s.earnings_growth > 0 ? '#1D9E75' : s.earnings_growth < 0 ? '#E24B4A' : 'var(--text-primary)' }}>{fmtGrowth(s.earnings_growth)}</div></Card>
           <Card label="Free cash flow"><div className="text-lg font-semibold">{fmtMcap(s.free_cashflow)}</div></Card>
@@ -230,7 +232,7 @@ export default function StockDetail({ ticker, onBack, onAddToWatchlist }: StockD
       </div>
 
       <div>
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           <Card label="D/E ratio"><div className="text-lg font-semibold">{fmt(s.debt_to_equity, 1)}</div></Card>
           <Card label="ROE"><div className="text-lg font-semibold">{s.return_on_equity ? `${(s.return_on_equity * 100).toFixed(1)}%` : '-'}</div></Card>
           <Card label="Beta"><div className="text-lg font-semibold">{fmt(s.beta, 2)}</div></Card>
@@ -241,7 +243,7 @@ export default function StockDetail({ ticker, onBack, onAddToWatchlist }: StockD
       {/* Dividend */}
       <div>
         <div className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: 'var(--text-secondary)' }}>Dividend & income</div>
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           <Card label="Dividend yield"><div className="text-lg font-semibold" style={{ color: s.dividend_yield_pct > 3 ? '#1D9E75' : 'var(--text-primary)' }}>{s.dividend_yield_pct ? `${fmt(s.dividend_yield_pct, 2)}%` : 'None'}</div></Card>
           <Card label="Dividend rate"><div className="text-lg font-semibold">{s.dividend_rate ? `$${fmt(s.dividend_rate, 2)}` : '-'}</div></Card>
           <Card label="Payout ratio"><div className="text-lg font-semibold">{s.payout_ratio ? `${(s.payout_ratio * 100).toFixed(0)}%` : '-'}</div></Card>
@@ -252,7 +254,7 @@ export default function StockDetail({ ticker, onBack, onAddToWatchlist }: StockD
       {/* Analyst */}
       <div>
         <div className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: 'var(--text-secondary)' }}>Analyst consensus</div>
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           <Card label="Consensus"><div className="text-lg font-semibold capitalize">{s.analyst_consensus || '-'}</div></Card>
           <Card label="Target price"><div className="text-lg font-semibold">{s.target_price ? `$${fmt(s.target_price)}` : '-'}</div></Card>
           <Card label="Upside"><div className="text-lg font-semibold" style={{ color: s.upside_pct > 0 ? '#1D9E75' : s.upside_pct < 0 ? '#E24B4A' : 'var(--text-primary)' }}>{fmtPct(s.upside_pct)}</div></Card>
@@ -263,7 +265,7 @@ export default function StockDetail({ ticker, onBack, onAddToWatchlist }: StockD
       {/* Earnings */}
       <div>
         <div className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: 'var(--text-secondary)' }}>Earnings</div>
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           <Card label="Next earnings date">
             <div className="text-lg font-semibold">{s.next_earnings_date ? new Date(s.next_earnings_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-'}</div>
           </Card>
@@ -284,7 +286,7 @@ export default function StockDetail({ ticker, onBack, onAddToWatchlist }: StockD
             </div>
           </Card>
         </div>
-        <div className="grid grid-cols-4 gap-3 mt-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mt-3">
           <Card label="Trailing EPS (TTM)">
             <div className="text-lg font-semibold">{s.trailing_eps ? `$${fmt(s.trailing_eps)}` : '-'}</div>
           </Card>
@@ -333,7 +335,7 @@ export default function StockDetail({ ticker, onBack, onAddToWatchlist }: StockD
       {/* Insider activity */}
       <div>
         <div className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: 'var(--text-secondary)' }}>Insider activity (90 days)</div>
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           <Card label="Insider buys"><div className="text-lg font-semibold" style={{ color: s.buy_count > 0 ? '#1D9E75' : 'var(--text-primary)' }}>{s.buy_count ?? '-'}</div></Card>
           <Card label="Insider sells"><div className="text-lg font-semibold" style={{ color: s.sell_count > 0 ? '#E24B4A' : 'var(--text-primary)' }}>{s.sell_count ?? '-'}</div></Card>
           <Card label="Net insider $"><div className="text-lg font-semibold" style={{ color: (s.insider_net_value ?? 0) > 0 ? '#1D9E75' : (s.insider_net_value ?? 0) < 0 ? '#E24B4A' : 'var(--text-primary)' }}>{fmtDollar(s.insider_net_value)}</div></Card>

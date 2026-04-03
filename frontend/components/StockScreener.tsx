@@ -25,10 +25,13 @@ function scoreColor(score: number | null): string {
 
 function formatMarketCap(mc: number | null): string {
   if (mc == null) return '-';
-  if (mc >= 1e12) return `$${(mc / 1e12).toFixed(1)}T`;
-  if (mc >= 1e9) return `$${(mc / 1e9).toFixed(1)}B`;
-  if (mc >= 1e6) return `$${(mc / 1e6).toFixed(0)}M`;
-  return `$${mc.toLocaleString()}`;
+  const abs = Math.abs(mc);
+  const sign = mc < 0 ? '-' : '';
+  if (abs >= 1e12) return `${sign}$${(abs / 1e12).toFixed(1)}T`;
+  if (abs >= 1e9) return `${sign}$${(abs / 1e9).toFixed(1)}B`;
+  if (abs >= 1e6) return `${sign}$${(abs / 1e6).toFixed(0)}M`;
+  if (abs >= 1e3) return `${sign}$${(abs / 1e3).toFixed(0)}K`;
+  return `${sign}$${abs.toFixed(0)}`;
 }
 
 function fmt(v: number | null, decimals = 2): string {
@@ -329,7 +332,7 @@ export default function StockScreener({ stocks, onSelectTicker, onAddToWatchlist
 
       {/* Table */}
       <div className="rounded-lg overflow-hidden" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto table-scroll" style={{ WebkitOverflowScrolling: 'touch' }}>
           <table className="w-full text-xs" style={{ minWidth: 1300 }}>
             <thead>
               <tr style={{ background: 'var(--bg-secondary)' }}>

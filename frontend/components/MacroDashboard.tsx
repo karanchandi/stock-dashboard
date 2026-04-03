@@ -127,7 +127,7 @@ export default function MacroDashboard({ data }: { data: MacroData | null }) {
       </div>
 
       {/* Sentiment row */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
         <Card label="Fear & greed index" onClick={() => setDrilldown({ indicator: 'fear_greed', label: 'Fear & Greed Index' })}>
           <div className="text-2xl font-semibold">
             <Signal color={data.fear_greed_signal || 'gray'} />
@@ -270,7 +270,7 @@ export default function MacroDashboard({ data }: { data: MacroData | null }) {
       {/* Commodities & rates */}
       <div>
         <div className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: 'var(--text-secondary)' }}>Commodities & rates</div>
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           <Card label="WTI crude oil" onClick={() => setDrilldown({ indicator: 'oil', label: 'WTI Crude Oil' })}>
             <div className="text-lg font-semibold">
               <Signal color={data.oil_signal || 'gray'} />${data.oil_wti?.toFixed(2)}

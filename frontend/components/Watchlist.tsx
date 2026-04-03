@@ -98,9 +98,9 @@ export default function Watchlist({ onSelectTicker, latestPrices, stocks = [] }:
   const statusColors: Record<string, string> = { watching: '#EF9F27', holding: '#1D9E75', sold: '#9ca3af' };
 
   return (
-    <div className="flex gap-4" style={{ minHeight: 600 }}>
+    <div className="flex flex-col lg:flex-row gap-4" style={{ minHeight: 400 }}>
       {/* Left sidebar — ticker list */}
-      <div className="w-72 flex-shrink-0">
+      <div className="w-full lg:w-72 lg:flex-shrink-0">
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
             Watchlist <span className="font-normal" style={{ color: 'var(--text-tertiary)' }}>({items.length})</span>
@@ -139,7 +139,7 @@ export default function Watchlist({ onSelectTicker, latestPrices, stocks = [] }:
         )}
 
         {/* Ticker list */}
-        <div className="space-y-1">
+        <div className="flex lg:flex-col gap-1 lg:gap-1 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0">
           {loading ? (
             <div className="text-xs py-10 text-center" style={{ color: 'var(--text-secondary)' }}>Loading...</div>
           ) : items.length === 0 ? (
@@ -261,7 +261,7 @@ export default function Watchlist({ onSelectTicker, latestPrices, stocks = [] }:
               return (
                 <div className="space-y-3">
                   {/* Scores row */}
-                  <div className="grid grid-cols-4 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
                     <div className="rounded-lg p-3" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
                       <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Overall Rating</div>
                       <div className="text-xl font-bold mt-0.5" style={{ color: sigColors[scoreColor(stockData.combined_score)] }}>
@@ -289,7 +289,7 @@ export default function Watchlist({ onSelectTicker, latestPrices, stocks = [] }:
                   </div>
 
                   {/* Key metrics grid */}
-                  <div className="grid grid-cols-4 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
                     <div className="rounded-lg p-3" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
                       <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Market Cap</div>
                       <div className="text-sm font-semibold mt-0.5">{stockData.market_cap ? (stockData.market_cap >= 1e12 ? `$${(stockData.market_cap/1e12).toFixed(1)}T` : stockData.market_cap >= 1e9 ? `$${(stockData.market_cap/1e9).toFixed(1)}B` : `$${(stockData.market_cap/1e6).toFixed(0)}M`) : '-'}</div>
@@ -310,7 +310,7 @@ export default function Watchlist({ onSelectTicker, latestPrices, stocks = [] }:
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-4 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
                     <div className="rounded-lg p-3" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
                       <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Div Yield</div>
                       <div className="text-sm font-semibold mt-0.5">{stockData.dividend_yield_pct ? `${stockData.dividend_yield_pct.toFixed(2)}%` : 'None'}</div>
@@ -329,7 +329,7 @@ export default function Watchlist({ onSelectTicker, latestPrices, stocks = [] }:
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-4 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
                     <div className="rounded-lg p-3" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
                       <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Next Earnings</div>
                       <div className="text-sm font-semibold mt-0.5">{stockData.next_earnings_date ? new Date(stockData.next_earnings_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '-'}</div>

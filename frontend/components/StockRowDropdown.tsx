@@ -16,10 +16,12 @@ function fmt(v: any, decimals = 2): string {
 function fmtMcap(mc: any): string {
   if (mc == null) return '-';
   const n = Number(mc);
-  if (n >= 1e12) return `$${(n / 1e12).toFixed(1)}T`;
-  if (n >= 1e9) return `$${(n / 1e9).toFixed(1)}B`;
-  if (n >= 1e6) return `$${(n / 1e6).toFixed(0)}M`;
-  return `$${n.toLocaleString()}`;
+  const abs = Math.abs(n);
+  const sign = n < 0 ? '-' : '';
+  if (abs >= 1e12) return `${sign}$${(abs / 1e12).toFixed(1)}T`;
+  if (abs >= 1e9) return `${sign}$${(abs / 1e9).toFixed(1)}B`;
+  if (abs >= 1e6) return `${sign}$${(abs / 1e6).toFixed(0)}M`;
+  return `${sign}$${abs.toLocaleString()}`;
 }
 
 function Signal({ color }: { color: 'green' | 'yellow' | 'red' | 'gray' }) {
@@ -48,7 +50,7 @@ export default function StockRowDropdown({ stock, onViewFullDetails, onAddToWatc
 
   return (
     <div className="px-4 py-4" style={{ background: 'var(--bg-primary)', borderTop: '0.5px solid var(--border)' }}>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Left: Chart */}
         <div className="col-span-2">
           <PriceChart ticker={s.ticker} compact={true} />
