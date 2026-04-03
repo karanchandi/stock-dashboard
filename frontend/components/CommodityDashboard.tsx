@@ -24,7 +24,7 @@ const COMMODITY_DEFS: { ticker: string; name: string; sector: string; unit: stri
   { ticker: 'NG=F', name: 'Natural Gas', sector: 'Energy', unit: '$/MMBtu', breakeven: 2.75, breakevenNote: 'Haynesville avg' },
   { ticker: 'RB=F', name: 'Gasoline (RBOB)', sector: 'Energy', unit: '$/gal', breakeven: 2.50, breakevenNote: 'Refining cost basis' },
   { ticker: 'HO=F', name: 'Heating Oil', sector: 'Energy', unit: '$/gal', breakeven: 3.50, breakevenNote: 'Refining margin proxy' },
-  { ticker: 'UX=F', name: 'Uranium (U3O8)', sector: 'Energy', unit: '$/lb', breakeven: 45, breakevenNote: 'ISR $30-40, conventional $50-60' },
+  { ticker: 'SRUUF', name: 'Uranium (Sprott Trust)', sector: 'Energy', unit: '$/share', breakeven: 14, breakevenNote: 'Trust proxy ~$45/lb U3O8 breakeven' },
   // Precious Metals
   { ticker: 'GC=F', name: 'Gold', sector: 'Precious Metals', unit: '$/oz', breakeven: 1600, breakevenNote: 'Global AISC avg (VanEck 2025)' },
   { ticker: 'SI=F', name: 'Silver', sector: 'Precious Metals', unit: '$/oz', breakeven: 27, breakevenNote: 'AISC avg; byproduct credits vary' },
@@ -33,7 +33,6 @@ const COMMODITY_DEFS: { ticker: string; name: string; sector: string; unit: stri
   // Industrial Metals
   { ticker: 'HG=F', name: 'Copper', sector: 'Industrial Metals', unit: '$/lb', breakeven: 3.00, breakevenNote: 'Chile/Peru avg $2.50; US higher' },
   { ticker: 'ALI=F', name: 'Aluminum', sector: 'Industrial Metals', unit: '$/ton', breakeven: 2000, breakevenNote: 'Energy ~40% of cost' },
-  { ticker: 'LBS=F', name: 'Lumber', sector: 'Industrial Metals', unit: '$/MBF', breakeven: 300, breakevenNote: 'BC/Pacific NW' },
   // Agriculture - Grains
   { ticker: 'ZC=F', name: 'Corn', sector: 'Agriculture', unit: '¢/bu', breakeven: 425, breakevenNote: 'USDA cost of production' },
   { ticker: 'ZW=F', name: 'Wheat', sector: 'Agriculture', unit: '¢/bu', breakeven: 600, breakevenNote: 'Highly variable by region' },
@@ -78,11 +77,17 @@ export default function CommodityDashboard() {
   const [loading, setLoading] = useState(true);
   const [sector, setSector] = useState('All');
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [camecoUranium, setCamecoUranium] = useState<{ spotPrice: number | null; ltPrice: number | null; changePct: number | null; date: string } | null>(null);
 
   useEffect(() => {
     async function fetchAll() {
       setLoading(true);
       const results: CommodityData[] = [];
+
+      // Fetch Cameco uranium in parallel
+      fetch('/api/uranium').then(r => r.json()).then(data => {
+        if (data.spotPrice) setCamecoUranium({ spotPrice: data.spotPrice, ltPrice: data.longTermPrice, changePct: data.changePct, date: data.date });
+      }).catch(() => {});
 
       // Fetch in batches of 5 to avoid rate limits
       for (let i = 0; i < COMMODITY_DEFS.length; i += 5) {
@@ -145,7 +150,55 @@ export default function CommodityDashboard() {
       {loading ? (
         <div className="text-center py-20 text-sm" style={{ color: 'var(--text-secondary)' }}>Loading commodity data...</div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="space-y-4">
+          {/* Cameco Uranium Spot Price — special card */}
+          {(sector === 'All' || sector === 'Energy') && camecoUranium?.spotPrice && (
+            <div className="rounded-lg p-4" style={{ background: 'var(--bg-primary)', border: '1px solid var(--brand)', boxShadow: 'var(--card-shadow)' }}>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Uranium U3O8 Spot Price</span>
+                    <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'var(--brand-light)', color: 'var(--brand)', fontSize: 10 }}>Cameco</span>
+                  </div>
+                  <div className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>Source: UxC/TradeTech industry avg · Updated {camecoUranium.date}</div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Spot</div>
+                    <div className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>${camecoUranium.spotPrice.toFixed(2)}<span className="text-xs font-normal ml-1" style={{ color: 'var(--text-tertiary)' }}>/lb</span></div>
+                    {camecoUranium.changePct != null && (
+                      <div className="text-xs font-medium" style={{ color: camecoUranium.changePct >= 0 ? '#1D9E75' : '#E24B4A' }}>
+                        {camecoUranium.changePct >= 0 ? '▲' : '▼'} {Math.abs(camecoUranium.changePct).toFixed(1)}% MoM
+                      </div>
+                    )}
+                  </div>
+                  {camecoUranium.ltPrice && (
+                    <div className="text-right">
+                      <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Long-term</div>
+                      <div className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>${camecoUranium.ltPrice.toFixed(2)}<span className="text-xs font-normal ml-1" style={{ color: 'var(--text-tertiary)' }}>/lb</span></div>
+                    </div>
+                  )}
+                  <div className="text-right">
+                    <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Breakeven</div>
+                    <div className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>$45/lb</div>
+                    <div className="text-xs" style={{ color: '#1D9E75', fontWeight: 600 }}>+{((camecoUranium.spotPrice - 45) / 45 * 100).toFixed(0)}% margin</div>
+                  </div>
+                </div>
+              </div>
+              {/* Breakeven gauge */}
+              <div className="mt-3 relative h-2.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-tertiary)' }}>
+                <div className="absolute top-0 w-0.5 h-full" style={{ left: '50%', background: 'var(--text-secondary)', zIndex: 2 }} />
+                <div className="h-full rounded-full" style={{ width: `${Math.min(100, (camecoUranium.spotPrice / 90) * 100)}%`, background: 'linear-gradient(to right, #1D9E75, #378ADD)' }} />
+              </div>
+              <div className="flex justify-between text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
+                <span>BE: $45/lb</span>
+                <span>ISR $30-40 · Conventional $50-60</span>
+              </div>
+            </div>
+          )}
+
+          {/* Commodity cards grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {filtered.map(c => {
             const margin = c.price && c.breakeven ? ((c.price - c.breakeven) / c.breakeven) * 100 : 0;
             const gaugePos = c.price && c.breakeven ? Math.min(100, Math.max(0, (c.price / (c.breakeven * 2)) * 100)) : 50;
@@ -233,6 +286,7 @@ export default function CommodityDashboard() {
               </div>
             );
           })}
+        </div>
         </div>
       )}
     </div>
