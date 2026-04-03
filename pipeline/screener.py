@@ -175,30 +175,39 @@ def score_value(row):
     subsector = row.get("subsector", "")
     weights = WEIGHTS.get(subsector, WEIGHTS["default"])
     scores = {}
+    available_count = 0
 
     pe = safe_float(row.get("pe_ratio"))
     if pe is not None and 0 < pe < 100:
         scores["pe_score"] = max(0, min(100, 100 - (pe / 30 * 100)))
+        available_count += 1
     else:
-        scores["pe_score"] = None
+        # Negative, zero, or missing P/E = no earnings = score 0
+        scores["pe_score"] = 0
 
     pb = safe_float(row.get("pb_ratio"))
-    if pb is not None and 0 < pb < 50:
+    if pb is not None and pb > 0.01 and pb < 50:
         scores["pb_score"] = max(0, min(100, 100 - (pb / 5 * 100)))
+        available_count += 1
     else:
-        scores["pb_score"] = None
+        # Near-zero, negative, or missing P/B = score 0
+        scores["pb_score"] = 0
 
     ev = safe_float(row.get("ev_ebitda"))
-    if ev is not None and 0 < ev < 100:
+    if ev is not None and ev > 0.5 and ev < 100:
         scores["ev_ebitda_score"] = max(0, min(100, 100 - (ev / 20 * 100)))
+        available_count += 1
+    elif ev is not None and 0 < ev <= 0.5:
+        # Suspiciously low EV/EBITDA (likely bad data or shell company)
+        scores["ev_ebitda_score"] = 10
     else:
         scores["ev_ebitda_score"] = None
 
     dy = safe_float(row.get("dividend_yield"))
     if dy is not None and dy > 0:
         # yfinance returns dividendYield as percentage (e.g. 5.22 = 5.22%)
-        # Score: 10% yield = 100 score
         scores["div_yield_score"] = min(100, dy / 10 * 100)
+        available_count += 1
     else:
         scores["div_yield_score"] = 0
 
@@ -206,12 +215,14 @@ def score_value(row):
     if de is not None and de >= 0:
         cap = 300 if subsector == "REIT" else 200
         scores["debt_equity_score"] = max(0, min(100, 100 - (de / cap * 100)))
+        available_count += 1
     else:
         scores["debt_equity_score"] = None
 
     pct = safe_float(row.get("pct_from_52w_high"))
     if pct is not None:
         scores["52w_score"] = min(100, max(0, abs(pct) * 2))
+        available_count += 1
     else:
         scores["52w_score"] = None
 
@@ -221,14 +232,20 @@ def score_value(row):
         if fcf and mcap and mcap > 0:
             ffo_yield = fcf / mcap * 100
             scores["ffo_score"] = min(100, max(0, ffo_yield * 10))
+            available_count += 1
         else:
             scores["ffo_score"] = None
+
+    # Require at least 3 metrics with real data for a meaningful score
+    if available_count < 3:
+        return None, scores
 
     total_weight = 0
     total_score = 0
     for key, weight in weights.items():
-        if scores.get(key) is not None:
-            total_score += scores[key] * weight
+        score_val = scores.get(key)
+        if score_val is not None:
+            total_score += score_val * weight
             total_weight += weight
 
     composite = (total_score / total_weight) if total_weight > 0 else None

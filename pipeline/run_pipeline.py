@@ -39,6 +39,8 @@ def run_pipeline():
         universe = build_universe()
         results = []
         errors = []
+        skipped_mcap = 0
+        MIN_MARKET_CAP = 100_000_000  # $100M floor
 
         for i, ticker_info in enumerate(universe):
             ticker = ticker_info["ticker"]
@@ -48,6 +50,13 @@ def run_pipeline():
 
             data = fetch_all_data(ticker_info)
             if data:
+                # Skip stocks with market cap below $100M
+                mcap = data.get("market_cap")
+                if mcap is not None and mcap < MIN_MARKET_CAP:
+                    skipped_mcap += 1
+                    time.sleep(1.2)
+                    continue
+
                 composite, _ = score_value(data)
                 data["value_score"] = round(composite, 2) if composite else None
                 data["market_cap_tier"] = categorize_market_cap(data.get("market_cap"))
@@ -73,6 +82,11 @@ def run_pipeline():
             for ticker_info in retry_universe:
                 data = fetch_all_data(ticker_info)
                 if data:
+                    mcap = data.get("market_cap")
+                    if mcap is not None and mcap < MIN_MARKET_CAP:
+                        skipped_mcap += 1
+                        time.sleep(2.0)
+                        continue
                     composite, _ = score_value(data)
                     data["value_score"] = round(composite, 2) if composite else None
                     data["market_cap_tier"] = categorize_market_cap(data.get("market_cap"))
@@ -87,7 +101,7 @@ def run_pipeline():
 
         total_processed = len(results)
         total_failed = len(errors)
-        print(f"\n\nScreener: {total_processed} success, {total_failed} failed")
+        print(f"\n\nScreener: {total_processed} success, {total_failed} failed, {skipped_mcap} skipped (under $100M mcap)")
 
         # --- Phase 2: EDGAR Insider Data ---
         print(f"\nPHASE 2: EDGAR Insider Data")
@@ -109,18 +123,26 @@ def run_pipeline():
                 row["insider_net_value"] = ins.get("net_value")
                 row["insider_score"] = ins.get("insider_score")
 
-        # Compute combined score
+        # Compute combined score — missing components get default penalty scores
         for row in results:
             v = row.get("value_score")
             a = row.get("analyst_score")
             i_s = row.get("insider_score")
-            parts, weights = [], []
-            if v is not None: parts.append(v); weights.append(0.50)
-            if a is not None: parts.append(a); weights.append(0.30)
-            if i_s is not None: parts.append(i_s); weights.append(0.20)
-            if parts:
-                tw = sum(weights)
-                row["combined_score"] = round(sum(p * w for p, w in zip(parts, weights)) / tw, 2)
+
+            # Default penalty scores for missing data
+            # If no value score at all, stock lacks enough fundamentals — skip
+            if v is None:
+                row["combined_score"] = None
+                continue
+
+            # Missing analyst = below average (25/100)
+            if a is None:
+                a = 25
+            # Missing insider = neutral-negative (20/100)
+            if i_s is None:
+                i_s = 20
+
+            row["combined_score"] = round(v * 0.50 + a * 0.30 + i_s * 0.20, 2)
 
         # --- Phase 3: Write to Supabase ---
         print(f"\nPHASE 3: Writing to Supabase")
